@@ -3,6 +3,7 @@ extends Resource
 
 ## Tuning values shared by all boids. Changing a value at runtime affects every boid using this resource.
 ## Every @export_range property automatically gets a slider in the BoidSettingsPanel.
+## The values below are the defaults, a .tres file (e.g. default_boid_settings.tres) can override them.
 
 # constant movement speed (pixels per physics frame)
 @export_range(0.5, 15.0, 0.1) var speed: float = 5.0
@@ -11,13 +12,17 @@ extends Resource
 # how strongly the boid matches the flight direction of its neighbors
 @export_range(0.0, 5.0, 0.05) var alignment_weight: float = 1.0
 # how strongly the boid moves toward the center of mass of its neighbors
-@export_range(0.0, 5.0, 0.05) var cohesion_weight: float = 0.8
-# how strongly the boid keeps distance from its neighbors
-@export_range(0.0, 5.0, 0.05) var separation_weight: float = 1.5
+@export_range(0.0, 5.0, 0.05) var cohesion_weight: float = 1.0
+# how strongly the boid keeps its personal space free
+@export_range(0.0, 5.0, 0.05) var separation_weight: float = 2.0
+# personal space (in pixels): only neighbors closer than this push the boid away
+@export_range(16.0, 100.0, 1.0) var separation_radius: float = 28.0
+# how strongly the boid follows the mouse force of the player
+@export_range(0.0, 10.0, 0.1) var player_influence_weight: float = 2.0
 # how strongly the boid turns away from walls detected by its raycasts
 @export_range(0.0, 10.0, 0.1) var wall_avoidance_weight: float = 4.0
-# radius (in pixels) in which a boid sees its neighbors
-@export_range(10.0, 200.0, 1.0) var vision_radius: float = 50.0
+# radius (in pixels) in which a boid sees its neighbors (for alignment and cohesion)
+@export_range(20.0, 300.0, 1.0) var vision_radius: float = 90.0
 # length (in pixels) of the forward ray, the side rays get shorter toward the edges
 @export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
 # angle (in degrees) between the forward ray and the outermost side ray

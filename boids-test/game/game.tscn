@@ -2,19 +2,27 @@
 
 [ext_resource type="Script" uid="uid://4o3jhojn6hbq" path="res://game/game.gd" id="1_onqr8"]
 [ext_resource type="PackedScene" uid="uid://det1yhaw44ewy" path="res://levels/level_2.tscn" id="2_ycayy"]
+[ext_resource type="Script" path="res://flock/flock.gd" id="3_flock"]
+[ext_resource type="Resource" path="res://flock/default_boid_settings.tres" id="4_settings"]
+[ext_resource type="Script" path="res://player/player_influence.gd" id="5_influence"]
+[ext_resource type="Script" path="res://player/swarm_camera.gd" id="6_camera"]
 
 [node name="GameScene" type="Node2D" unique_id=462784093]
 script = ExtResource("1_onqr8")
-boid_count = 50
-
-[node name="BoidFolder" type="Node2D" parent="." unique_id=1355744520]
 
 [node name="Level2" parent="." unique_id=2075216894 instance=ExtResource("2_ycayy")]
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=253825087]
-position = Vector2(960, 540)
+[node name="PlayerInfluence" type="Node" parent="."]
+script = ExtResource("5_influence")
 
-[node name="Timer" type="Timer" parent="." unique_id=52747080]
-autostart = true
+[node name="Flock" type="Node2D" parent="." node_paths=PackedStringArray("player_influence")]
+position = Vector2(480, 280)
+script = ExtResource("3_flock")
+settings = ExtResource("4_settings")
+player_influence = NodePath("../PlayerInfluence")
 
-[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=253825087 node_paths=PackedStringArray("flock")]
+position = Vector2(480, 280)
+zoom = Vector2(2, 2)
+script = ExtResource("6_camera")
+flock = NodePath("../Flock")

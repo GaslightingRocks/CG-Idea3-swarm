@@ -7,12 +7,16 @@ const WALL_SKIN: float = 2.0
 const WALL_RAY_COUNT: int = 7
 # length of the outermost side rays relative to the forward ray
 const SIDE_RAY_LENGTH_FACTOR: float = 0.6
+# radius (in pixels) of the circle the boid's body occupies, two boids are never closer than twice this
+const BODY_RADIUS: float = 8.0
 
 # physics layers the boid can't fly through (the level TileMapLayer is on layer 1 "Walls")
 @export_flags_2d_physics var wall_collision_mask: int = 1
 
 ## Shared tuning values, assigned by the spawner. Falls back to the defaults when the scene runs on its own.
 var settings: BoidSettings
+## The swarm this boid belongs to. null means it's a stray that doesn't react to the player.
+var flock: Flock
 
 # circle shape of the "Vision" area, its radius follows settings.vision_radius
 @onready var vision_shape: CircleShape2D = $Vision/CollisionShape2D.shape
@@ -39,7 +43,7 @@ func _physics_process(_delta: float) -> void:
 	vision_shape.radius = settings.vision_radius
 	update_rays()
 
-	var steering: Vector2 = flocking_force() + wall_force() * settings.wall_avoidance_weight
+	var steering: Vector2 = flocking_force() + wall_force() * settings.wall_avoidance_weight + player_force()
 
 	# Limits how much the velocity can change per frame, which smooths out sudden turns
 	velocity += steering.limit_length(settings.max_steer_force)
@@ -49,6 +53,7 @@ func _physics_process(_delta: float) -> void:
 	# Enforces constant speed
 	velocity = velocity.normalized() * settings.speed
 	move()
+	resolve_overlaps()
 
 	# Smoothly interpolates the rotation angle toward the current velocity vector
 	rotation = lerp_angle(rotation, velocity.angle(), settings.rotation_smoothing)
@@ -94,10 +99,10 @@ func flocking_force() -> Vector2:
 		avg_velocity += boid.velocity
 		center += boid.global_position
 		var offset: Vector2 = global_position - boid.global_position
-		var distance_squared: float = offset.length_squared()
-		if distance_squared > 0.0:
-			# Closer neighbors push away much stronger
-			separation += offset / distance_squared
+		var distance: float = offset.length()
+		# Only neighbors inside the personal space push away, closer ones much stronger
+		if distance > 0.0 and distance < settings.separation_radius:
+			separation += offset / (distance * distance)
 	center /= visible_boids.size()
 
 	# Alignment: Match flight direction with neighbors
@@ -122,6 +127,14 @@ func wall_force() -> Vector2:
 	return force * settings.speed
 
 
+## Steers toward where the player points the mouse, stronger the further the mouse is from the screen center.
+func player_force() -> Vector2:
+	if flock == null:
+		return Vector2.ZERO
+	var force: Vector2 = flock.player_force
+	return steer_towards(force) * force.length() * settings.player_influence_weight
+
+
 ## Drops neighbors that were deleted (e.g. when the boid count is lowered) without leaving the vision area.
 func remove_freed_boids() -> void:
 	for i in range(visible_boids.size() - 1, -1, -1):
@@ -131,7 +144,30 @@ func remove_freed_boids() -> void:
 
 ## Moves the boid and slides along walls instead of passing through them.
 func move() -> void:
-	var motion: Vector2 = velocity
+	global_position += clip_against_walls(velocity, true)
+
+
+## Pushes the boid out of every neighbor it overlaps with, so two boids never share the same space.
+## Each of the two boids moves half of the overlap, together they end up exactly touching.
+func resolve_overlaps() -> void:
+	var push: Vector2 = Vector2.ZERO
+	var min_distance: float = BODY_RADIUS * 2.0
+	for boid: Boid in visible_boids:
+		var offset: Vector2 = global_position - boid.global_position
+		var distance: float = offset.length()
+		if distance >= min_distance:
+			continue
+		# Boids exactly on top of each other have no direction to push in, so a random one is used
+		var direction: Vector2 = offset / distance if distance > 0.0 else Vector2.RIGHT.rotated(randf() * TAU)
+		push += direction * (min_distance - distance) * 0.5
+
+	if not push.is_zero_approx():
+		global_position += clip_against_walls(push, false)
+
+
+## Returns the part of the motion that doesn't run into a wall.
+## When turn_velocity is true, the velocity is turned along the wall as well.
+func clip_against_walls(motion: Vector2, turn_velocity: bool) -> Vector2:
 	# A few iterations so the boid also handles corners where it touches two walls at once
 	for i in 3:
 		if motion.is_zero_approx():
@@ -142,12 +178,12 @@ func move() -> void:
 		var normal: Vector2 = hit["normal"]
 		# Removes the part of the motion that points into the wall
 		motion = motion.slide(normal)
-		velocity = velocity.slide(normal)
-		# Flying straight into the wall leaves nothing to slide with, so it turns away instead
-		if velocity.is_zero_approx():
-			velocity = normal * settings.speed
-
-	global_position += motion
+		if turn_velocity:
+			velocity = velocity.slide(normal)
+			# Flying straight into the wall leaves nothing to slide with, so it turns away instead
+			if velocity.is_zero_approx():
+				velocity = normal * settings.speed
+	return motion
 
 
 ## Casts a ray against the level geometry and returns the hit, or an empty dictionary if nothing was hit.
