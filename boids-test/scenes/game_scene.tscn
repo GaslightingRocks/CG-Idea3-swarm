@@ -3,13 +3,13 @@
 [ext_resource type="Script" uid="uid://4o3jhojn6hbq" path="res://scripts/game_scene.gd" id="1_onqr8"]
 [ext_resource type="PackedScene" uid="uid://det1yhaw44ewy" path="res://scenes/levels/level_2.tscn" id="2_ycayy"]
 
-[node name="gameScene" type="Node2D" unique_id=462784093]
+[node name="GameScene" type="Node2D" unique_id=462784093]
 script = ExtResource("1_onqr8")
-num = 50
+boid_count = 50
 
-[node name="boidFolder" type="Node2D" parent="." unique_id=1355744520]
+[node name="BoidFolder" type="Node2D" parent="." unique_id=1355744520]
 
-[node name="level2" parent="." unique_id=2075216894 instance=ExtResource("2_ycayy")]
+[node name="Level2" parent="." unique_id=2075216894 instance=ExtResource("2_ycayy")]
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=253825087]
 position = Vector2(572, 323)
@@ -17,4 +17,4 @@ position = Vector2(572, 323)
 [node name="Timer" type="Timer" parent="." unique_id=52747080]
 autostart = true
 
-[connection signal="timeout" from="Timer" to="." method="_on_Timer_timeout"]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

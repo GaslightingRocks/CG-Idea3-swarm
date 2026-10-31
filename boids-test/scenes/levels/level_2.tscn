@@ -154,7 +154,7 @@ texture = ExtResource("1_jg0dc")
 physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_nmjpi")
 
-[node name="level2" type="Node2D" unique_id=2075216894]
+[node name="Level2" type="Node2D" unique_id=2075216894]
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1420256954 groups=["blocks"]]
 scale = Vector2(0.5, 0.5)
