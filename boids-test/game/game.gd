@@ -8,6 +8,8 @@ extends Node2D
 @onready var enemy_flock: Flock = $EnemyFlock
 @onready var camera: SwarmCamera = $Camera2D
 @onready var hud: Hud = $UI/Hud
+# one flock per StrayZone of the level, created in _ready()
+var stray_flocks: Array[Flock] = []
 
 
 func _ready() -> void:
@@ -18,12 +20,16 @@ func _ready() -> void:
 	else:
 		enemy_flock.boid_count = 0
 
+	spawn_stray_flocks()
+
 	camera.global_position = flock.global_position
 	# Tells the physics interpolation that the camera jumped there, instead of smoothly flying there
 	camera.reset_physics_interpolation()
 
 	flock.counts_changed.connect(update_hud)
 	enemy_flock.counts_changed.connect(update_hud)
+	for strays: Flock in stray_flocks:
+		strays.counts_changed.connect(update_hud)
 	update_hud()
 
 	# Child nodes are ready before their parent, so the flocks already have their settings here
@@ -35,6 +41,7 @@ func _ready() -> void:
 	var debug_overlay: DebugOverlay = DebugOverlay.new()
 	debug_overlay.flocks.append(flock)
 	debug_overlay.flocks.append(enemy_flock)
+	debug_overlay.flocks.append_array(stray_flocks)
 	debug_overlay.camera = camera
 	add_child(debug_overlay)
 
@@ -52,6 +59,25 @@ func place_flock(target: Flock, zone: StartZone) -> void:
 	target.center = target.global_position
 
 
+## Creates a group of strays for every StrayZone in the level. Strays fly slower, circle around their zone
+## and get the player's settings and colors once they join the swarm.
+func spawn_stray_flocks() -> void:
+	var stray_settings: BoidSettings = flock.settings.duplicate()
+	stray_settings.speed = 3.0
+	stray_settings.flock_pull_weight = 1.0
+	for zone: StrayZone in level.get_stray_zones():
+		var strays: Flock = Flock.new()
+		strays.name = "Strays_" + zone.name
+		strays.stray_group = true
+		strays.random_colors = false
+		strays.boid_color = Color(0.6, 0.65, 0.75)
+		strays.boid_count = zone.boid_count
+		strays.settings = stray_settings
+		add_child(strays)
+		place_flock(strays, zone)
+		stray_flocks.append(strays)
+
+
 ## Creates a slider panel for the settings of a flock.
 func add_settings_panel(target: Flock, title: String, panel_position: Vector2) -> BoidSettingsPanel:
 	var panel: BoidSettingsPanel = BoidSettingsPanel.new()
@@ -66,7 +92,10 @@ func add_settings_panel(target: Flock, title: String, panel_position: Vector2) -
 func update_hud() -> void:
 	var saved: int = flock.saved_count
 	var lost: int = flock.lost_count
-	hud.show_counts(flock.boids.size(), saved, lost, enemy_flock.boids.size())
+	var strays_left: int = 0
+	for strays: Flock in stray_flocks:
+		strays_left += strays.boids.size()
+	hud.show_counts(flock.boids.size(), saved, lost, enemy_flock.boids.size(), strays_left)
 
 	if flock.boids.is_empty() and saved + lost > 0:
 		hud.show_message("Runde vorbei: %d von %d gerettet\nR: Neustart" % [saved, saved + lost])

@@ -9,3 +9,12 @@ extends Node2D
 @export var goal_zone: GoalZone
 # where the enemy flock spawns, leave empty for a level without hunters
 @export var enemy_zone: StartZone
+
+
+## Returns all StrayZone nodes that are direct children of the level, so new ones only have to be added.
+func get_stray_zones() -> Array[StrayZone]:
+	var zones: Array[StrayZone] = []
+	for child: Node in get_children():
+		if child is StrayZone:
+			zones.append(child)
+	return zones

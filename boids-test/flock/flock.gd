@@ -22,6 +22,9 @@ signal counts_changed
 @export var player_influence: PlayerInfluence
 # flock this flock hunts (used by hunters to find the player's swarm), leave empty for none
 @export var target_flock: Flock
+# true for a group of strays: its boids circle around this node instead of the flock's center
+# and join the player's swarm when it comes within settings.join_radius
+@export var stray_group: bool = false
 
 # force the player currently applies, read by every boid in its own physics step
 var player_force: Vector2 = Vector2.ZERO
@@ -71,7 +74,8 @@ func update_center() -> void:
 	for boid: Boid in boids:
 		position_sum += boid.global_position
 		velocity_sum += boid.velocity
-	center = position_sum / boids.size()
+	# Strays are pulled toward their home spot (via flock_pull_weight) instead of their center of mass
+	center = global_position if stray_group else position_sum / boids.size()
 	average_velocity = velocity_sum / boids.size()
 
 
@@ -100,6 +104,26 @@ func on_boid_lost(boid: Boid) -> void:
 func on_boid_saved(boid: Boid) -> void:
 	boids.erase(boid)
 	saved_count += 1
+	counts_changed.emit()
+
+
+## Takes over a boid from another flock, e.g. a stray joining the player's swarm.
+## The boid gets this flock's settings and color from now on.
+func adopt(boid: Boid) -> void:
+	var old_flock: Flock = boid.flock
+	if old_flock == self:
+		return
+	if old_flock:
+		old_flock.boids.erase(boid)
+		old_flock.counts_changed.emit()
+
+	boid.flock = self
+	boid.settings = settings
+	boids.append(boid)
+	boid.modulate = Color(randf(), randf(), randf(), 1) if random_colors else boid_color
+	# Moves the node below this flock in the scene tree. "call_deferred" waits until the end of the frame,
+	# because changing the scene tree in the middle of the physics step is not allowed.
+	boid.reparent.call_deferred(self)
 	counts_changed.emit()
 
 

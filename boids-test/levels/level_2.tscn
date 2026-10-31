@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://levels/level.gd" id="2_level"]
 [ext_resource type="Script" path="res://levels/start_zone.gd" id="3_start"]
 [ext_resource type="Script" path="res://levels/goal_zone.gd" id="4_goal"]
+[ext_resource type="Script" path="res://levels/stray_zone.gd" id="5_stray"]
 
 [node name="Level2" type="Node2D" unique_id=2075216894 node_paths=PackedStringArray("start_zone", "goal_zone", "enemy_zone")]
 script = ExtResource("2_level")
@@ -50,3 +51,17 @@ script = ExtResource("3_start")
 radius = 100.0
 color = Color(1, 0.25, 0.25, 0.25)
 label = "GEGNER"
+
+[node name="StrayZone1" type="Node2D" parent="."]
+position = Vector2(900, 1580)
+script = ExtResource("5_stray")
+radius = 70.0
+label = "STREUNER"
+color = Color(0.6, 0.7, 1, 0.2)
+
+[node name="StrayZone2" type="Node2D" parent="."]
+position = Vector2(2140, 1500)
+script = ExtResource("5_stray")
+radius = 70.0
+label = "STREUNER"
+color = Color(0.6, 0.7, 1, 0.2)

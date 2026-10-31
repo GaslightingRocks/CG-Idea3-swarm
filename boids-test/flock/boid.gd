@@ -46,6 +46,8 @@ var neighbor_position_sum: Vector2 = Vector2.ZERO
 var separation_push: Vector2 = Vector2.ZERO
 var overlap_push: Vector2 = Vector2.ZERO
 var hunter_threat: Vector2 = Vector2.ZERO
+# player flock a stray wants to join, found in scan_neighbors()
+var join_target: Flock = null
 
 # steering forces of the last physics step, only stored for the debug overlay
 var debug_flocking_force: Vector2 = Vector2.ZERO
@@ -67,6 +69,9 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	apply_setting_changes()
 	scan_neighbors()
+	if join_target:
+		join_target.adopt(self)
+		join_target = null
 	update_wall_push()
 
 	# Kept in member variables so the debug overlay (F3) can draw them
@@ -156,11 +161,18 @@ func scan_start() -> void:
 
 
 ## Called by scan_neighbors() for every visible boid of another flock. Normal boids remember hunters to flee
-## from them, the Hunter class overrides this to look for prey instead.
+## from them, strays look for the player's swarm to join. The Hunter class overrides this to look for prey.
 func scan_other(boid: Boid, offset: Vector2, distance_squared: float) -> void:
-	if boid is Hunter and distance_squared > 0.0:
-		# Closer hunters are much scarier
-		hunter_threat += offset / distance_squared
+	if boid is Hunter:
+		if distance_squared > 0.0:
+			# Closer hunters are much scarier
+			hunter_threat += offset / distance_squared
+		return
+	# A stray joins as soon as a boid of a player-controlled flock comes within join_radius
+	var is_stray: bool = flock != null and flock.stray_group
+	var other_is_player: bool = boid.flock != null and boid.flock.player_influence != null
+	if is_stray and other_is_player and distance_squared < settings.join_radius * settings.join_radius:
+		join_target = boid.flock
 
 
 ## Returns true if the other boid belongs to the same flock (only those flock together).
