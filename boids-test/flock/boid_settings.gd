@@ -39,6 +39,18 @@ extends Resource
 @export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
 # angle (in degrees) between the forward ray and the outermost side ray
 @export_range(10.0, 90.0, 1.0) var wall_ray_spread: float = 60.0
+# Courage: every boid has its own courage between 0 (scared) and 1 (brave).
+# courage of a newly spawned boid
+@export_range(0.0, 1.0, 0.05) var courage_start: float = 0.5
+# visible neighbors of the own flock a boid needs to count as "in a group"
+@export_range(1, 20, 1) var courage_group_size: int = 4
+# courage gained per second while in a group / lost per second while alone
+@export_range(0.0, 2.0, 0.01) var courage_gain: float = 0.15
+@export_range(0.0, 2.0, 0.01) var courage_loss: float = 0.25
+# how strongly a boid with 0 courage follows the player (1 = like a brave one), brave boids always follow fully
+@export_range(0.0, 1.0, 0.05) var courage_min_follow: float = 0.4
+# wall avoidance multiplier for a boid with 0 courage, scared boids keep more distance (brave ones use 1)
+@export_range(1.0, 4.0, 0.1) var courage_wall_caution: float = 1.8
 # if true, a boid touching a wall is lost; if false, it slides along the wall
 @export var lethal_walls: bool = false
 # how fast the rotation follows the velocity (0 = never, 1 = instantly)

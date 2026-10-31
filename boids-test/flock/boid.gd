@@ -27,11 +27,15 @@ var flock: Flock
 
 # circle shape of the "Vision" area, its radius follows settings.vision_radius
 @onready var vision_shape: CircleShape2D = $Vision/CollisionShape2D.shape
+# the visible triangle, scaled and darkened to show the courage
+@onready var body: Polygon2D = $Body
 # all boids (of any flock) inside the vision circle, kept up to date by the Vision area's signals
 var visible_boids: Array[Boid] = []
 # current velocity vector of boid
 var velocity: Vector2 = Vector2.ZERO
 var state: State = State.FLYING
+# between 0 (scared) and 1 (brave): rises while the boid flies in a group, sinks while it's alone
+var courage: float = 0.5
 
 # push away from walls, sum of the wall normals the rays hit (recalculated every WALL_CHECK_INTERVAL steps)
 var wall_push: Vector2 = Vector2.ZERO
@@ -64,20 +68,23 @@ func _ready() -> void:
 
 	# Assigns a random initial flight direction and normalizes it to match speed
 	velocity = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * settings.speed
+	courage = settings.courage_start
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	apply_setting_changes()
 	scan_neighbors()
 	if join_target:
 		join_target.adopt(self)
 		join_target = null
+	update_courage(delta)
 	update_wall_push()
 
 	# Kept in member variables so the debug overlay (F3) can draw them
 	debug_flocking_force = flocking_force() + flock_pull_force()
 	debug_player_force = player_force()
-	debug_wall_force = wall_push * settings.wall_avoidance_weight
+	# Scared boids keep more distance to walls than brave ones
+	debug_wall_force = wall_push * settings.wall_avoidance_weight * lerpf(settings.courage_wall_caution, 1.0, courage)
 	debug_behavior_force = behavior_force()
 	var steering: Vector2 = debug_flocking_force + debug_player_force + debug_wall_force + debug_behavior_force
 
@@ -107,6 +114,18 @@ func _physics_process(_delta: float) -> void:
 func apply_setting_changes() -> void:
 	if vision_shape.radius != settings.vision_radius:
 		vision_shape.radius = settings.vision_radius
+
+
+## Courage rises while the boid has at least courage_group_size neighbors of its own flock and sinks otherwise.
+## Brave boids are drawn bigger and brighter, scared ones smaller and darker.
+func update_courage(delta: float) -> void:
+	if neighbor_count >= settings.courage_group_size:
+		courage += settings.courage_gain * delta
+	else:
+		courage -= settings.courage_loss * delta
+	courage = clampf(courage, 0.0, 1.0)
+	body.scale = Vector2.ONE * lerpf(0.75, 1.25, courage)
+	body.color = Color.WHITE.darkened(0.6 * (1.0 - courage))
 
 
 ## Goes once over all visible boids and collects everything the steering rules need.
@@ -225,7 +244,9 @@ func player_force() -> Vector2:
 		var normal: Vector2 = wall_push.normalized()
 		if force.dot(normal) < 0.0:
 			force = along_wall(force, normal)
-	return steer_towards(force) * force.length() * settings.player_influence_weight
+	# Brave boids follow the player fully, scared ones only partly
+	var follow: float = lerpf(settings.courage_min_follow, 1.0, courage)
+	return steer_towards(force) * force.length() * settings.player_influence_weight * follow
 
 
 ## Turns a direction that points into a wall so it runs along the wall instead, keeping its length.

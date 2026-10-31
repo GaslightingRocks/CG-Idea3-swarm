@@ -35,6 +35,11 @@ func _physics_process(delta: float) -> void:
 		check_contact()
 
 
+## Hunters are always fearless and keep their own size and color, so courage doesn't apply to them.
+func update_courage(_delta: float) -> void:
+	courage = 1.0
+
+
 func scan_start() -> void:
 	nearest_prey = null
 	nearest_prey_distance_squared = INF

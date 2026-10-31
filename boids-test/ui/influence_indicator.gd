@@ -29,7 +29,7 @@ func _draw() -> void:
 	if strength > 0.0:
 		draw_arc(center, indicator_radius * strength, 0.0, TAU, 64, Color(color, color.a * 0.5), 2.0, true)
 	var font: Font = ThemeDB.fallback_font
-	draw_string(font, center + Vector2(-60, indicator_radius + 28), "Kraft %d%%" % roundi(strength * 100.0), HORIZONTAL_ALIGNMENT_CENTER, 120, 18, faint * Color(1, 1, 1, 3))
+	draw_string(font, center + Vector2(-60, indicator_radius + 28), "Kraft %d%%" % roundi(strength * 100.0), HORIZONTAL_ALIGNMENT_CENTER, 120, 18, Color(color, color.a * 0.75))
 
 	var force: Vector2 = player_influence.get_force()
 	if force.is_zero_approx():

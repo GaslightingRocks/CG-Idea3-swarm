@@ -46,6 +46,11 @@ func _ready() -> void:
 	add_child(debug_overlay)
 
 
+func _process(_delta: float) -> void:
+	# Courage changes all the time, so it's updated every frame instead of only on count changes
+	hud.show_courage(flock.total_courage, flock.boids.size())
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	# "restart" is defined in Project Settings > Input Map (R by default)
 	if event.is_action_pressed("restart"):

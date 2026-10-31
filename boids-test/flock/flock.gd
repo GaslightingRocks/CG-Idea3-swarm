@@ -32,6 +32,8 @@ var player_force: Vector2 = Vector2.ZERO
 var center: Vector2 = Vector2.ZERO
 # average velocity of all boids, used so boids hitting a wall all turn to the same side
 var average_velocity: Vector2 = Vector2.ZERO
+# sum of the courage of all boids, the currency for special abilities
+var total_courage: float = 0.0
 # all boids that currently belong to this flock and are still flying
 var boids: Array[Boid] = []
 # boids that reached the goal / were killed
@@ -63,17 +65,20 @@ func _physics_process(_delta: float) -> void:
 	update_center()
 
 
-## Calculates center of mass and average velocity once, instead of every boid doing it on its own.
+## Calculates center of mass, average velocity and total courage once, instead of every boid doing it on its own.
 func update_center() -> void:
 	if boids.is_empty():
 		center = global_position
 		average_velocity = Vector2.ZERO
+		total_courage = 0.0
 		return
 	var position_sum: Vector2 = Vector2.ZERO
 	var velocity_sum: Vector2 = Vector2.ZERO
+	total_courage = 0.0
 	for boid: Boid in boids:
 		position_sum += boid.global_position
 		velocity_sum += boid.velocity
+		total_courage += boid.courage
 	# Strays are pulled toward their home spot (via flock_pull_weight) instead of their center of mass
 	center = global_position if stray_group else position_sum / boids.size()
 	average_velocity = velocity_sum / boids.size()
