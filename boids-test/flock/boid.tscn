@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://durgnwkqu0wel"]
 
-[ext_resource type="Script" uid="uid://cyd07fjm8wu1u" path="res://scripts/boid.gd" id="1_vrn0v"]
+[ext_resource type="Script" uid="uid://cyd07fjm8wu1u" path="res://flock/boid.gd" id="1_vrn0v"]
 [ext_resource type="Texture2D" uid="uid://fxx5ibtrk31a" path="res://assets/triangle-png-28.png" id="2_tri"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bdhaf"]

@@ -2,7 +2,7 @@ class_name BoidSettingsPanel
 extends CanvasLayer
 
 ## Debug UI that creates a slider for every @export_range property of a BoidSettings resource.
-## Press H to show or hide it.
+## The "toggle_settings" input action (H) shows or hides it.
 
 # resource edited by the sliders, has to be set before the panel enters the tree
 var settings: BoidSettings
@@ -53,8 +53,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	var key: InputEventKey = event as InputEventKey
-	if key and key.pressed and not key.echo and key.keycode == KEY_H:
+	# "toggle_settings" is defined in Project Settings > Input Map (H by default)
+	if event.is_action_pressed("toggle_settings"):
 		panel.visible = not panel.visible
 
 

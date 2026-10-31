@@ -1,6 +1,6 @@
 extends Node2D
 
-const BOID_SCENE: PackedScene = preload("res://scenes/boid.tscn")
+const BOID_SCENE: PackedScene = preload("res://flock/boid.tscn")
 
 # number of boids
 @export var boid_count: int = 100
