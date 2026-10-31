@@ -3,26 +3,31 @@ extends Area2D
 
 # distance the boid keeps from a wall it slides along
 const WALL_SKIN: float = 2.0
+# number of wall detection rays, spread evenly from left to right
+const WALL_RAY_COUNT: int = 7
+# length of the outermost side rays relative to the forward ray
+const SIDE_RAY_LENGTH_FACTOR: float = 0.6
 
-# physics layers the boid can't fly through (the level TileMapLayer is on layer 1)
+# physics layers the boid can't fly through (the level TileMapLayer is on layer 1 "Walls")
 @export_flags_2d_physics var wall_collision_mask: int = 1
 
 ## Shared tuning values, assigned by the spawner. Falls back to the defaults when the scene runs on its own.
 var settings: BoidSettings
 
-@onready var rays: Array[Node] = $RayFolder.get_children()
+# circle shape of the "Vision" area, its radius follows settings.vision_radius
+@onready var vision_shape: CircleShape2D = $Vision/CollisionShape2D.shape
+# wall detection rays, created in code so their length and angle can be tuned in the settings
+var rays: Array[RayCast2D] = []
 var visible_boids: Array[Boid] = []
 # current velocity vector of boid
 var velocity: Vector2 = Vector2.ZERO
-var screen_size: Vector2
 
 
 func _ready() -> void:
 	if settings == null:
 		settings = BoidSettings.new()
 
-	# Fetches the window boundaries at startup
-	screen_size = get_viewport_rect().size
+	create_rays()
 	randomize()
 
 	# Assigns a random initial flight direction and normalizes it to match speed
@@ -30,6 +35,10 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	# Applies slider changes from the settings panel
+	vision_shape.radius = settings.vision_radius
+	update_rays()
+
 	var steering: Vector2 = flocking_force() + wall_force() * settings.wall_avoidance_weight
 
 	# Limits how much the velocity can change per frame, which smooths out sudden turns
@@ -43,6 +52,26 @@ func _physics_process(_delta: float) -> void:
 
 	# Smoothly interpolates the rotation angle toward the current velocity vector
 	rotation = lerp_angle(rotation, velocity.angle(), settings.rotation_smoothing)
+
+
+## Creates the wall detection rays as children, so they turn together with the boid.
+func create_rays() -> void:
+	for i in WALL_RAY_COUNT:
+		var ray: RayCast2D = RayCast2D.new()
+		ray.collision_mask = wall_collision_mask
+		add_child(ray)
+		rays.append(ray)
+	update_rays()
+
+
+## Points the rays fan-shaped to the front: the middle ray is the longest, the outer ones are shorter.
+func update_rays() -> void:
+	for i in rays.size():
+		# -1 for the leftmost ray, 0 for the middle one, +1 for the rightmost ray
+		var side: float = lerpf(-1.0, 1.0, float(i) / (rays.size() - 1))
+		var angle: float = deg_to_rad(settings.wall_ray_spread) * side
+		var length: float = settings.wall_look_ahead * lerpf(1.0, SIDE_RAY_LENGTH_FACTOR, absf(side))
+		rays[i].target_position = Vector2.RIGHT.rotated(angle) * length
 
 
 ## Returns the steering force needed to turn the current velocity toward the given direction.
@@ -85,7 +114,7 @@ func wall_force() -> Vector2:
 	var force: Vector2 = Vector2.ZERO
 	for ray: RayCast2D in rays:
 		if ray.is_colliding() and ray.get_collider().is_in_group("blocks"):
-			var ray_length: float = (ray.to_global(ray.target_position) - ray.global_position).length()
+			var ray_length: float = ray.target_position.length()
 			var distance: float = (ray.get_collision_point() - ray.global_position).length()
 			# Grows linearly from 0 at the end of the ray to 1 directly at the wall
 			var proximity: float = 1.0 - clampf(distance / ray_length, 0.0, 1.0)
@@ -100,7 +129,7 @@ func remove_freed_boids() -> void:
 			visible_boids.remove_at(i)
 
 
-## Moves the boid, slides along walls instead of passing through them and wraps around screen edges.
+## Moves the boid and slides along walls instead of passing through them.
 func move() -> void:
 	var motion: Vector2 = velocity
 	# A few iterations so the boid also handles corners where it touches two walls at once
@@ -119,15 +148,6 @@ func move() -> void:
 			velocity = normal * settings.speed
 
 	global_position += motion
-
-	if global_position.x < 0:
-		global_position.x = screen_size.x
-	if global_position.x > screen_size.x:
-		global_position.x = 0
-	if global_position.y < 0:
-		global_position.y = screen_size.y
-	if global_position.y > screen_size.y:
-		global_position.y = 0
 
 
 ## Casts a ray against the level geometry and returns the hit, or an empty dictionary if nothing was hit.

@@ -16,5 +16,11 @@ extends Resource
 @export_range(0.0, 5.0, 0.05) var separation_weight: float = 1.5
 # how strongly the boid turns away from walls detected by its raycasts
 @export_range(0.0, 10.0, 0.1) var wall_avoidance_weight: float = 4.0
+# radius (in pixels) in which a boid sees its neighbors
+@export_range(10.0, 200.0, 1.0) var vision_radius: float = 50.0
+# length (in pixels) of the forward ray, the side rays get shorter toward the edges
+@export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
+# angle (in degrees) between the forward ray and the outermost side ray
+@export_range(10.0, 90.0, 1.0) var wall_ray_spread: float = 60.0
 # how fast the rotation follows the velocity (0 = never, 1 = instantly)
 @export_range(0.0, 1.0, 0.01) var rotation_smoothing: float = 0.4
