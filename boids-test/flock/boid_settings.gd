@@ -18,17 +18,19 @@ extends Resource
 # how strongly the boid keeps its personal space free
 @export_range(0.0, 5.0, 0.05) var separation_weight: float = 2.0
 # personal space (in pixels): only neighbors closer than this push the boid away
-@export_range(16.0, 100.0, 1.0) var separation_radius: float = 28.0
+@export_range(10.0, 100.0, 1.0) var separation_radius: float = 18.0
 # how strongly the boid follows the mouse force of the player
 @export_range(0.0, 10.0, 0.1) var player_influence_weight: float = 2.0
 # how strongly a normal boid flees from hunters it can see
 @export_range(0.0, 10.0, 0.1) var flee_weight: float = 1.5
 # how strongly a hunter chases the nearest prey it can see (only used by hunters)
 @export_range(0.0, 10.0, 0.1) var chase_weight: float = 2.0
+# lives of a hunter: every kill costs one, it dies at 0 (only used by hunters, applies to newly spawned ones)
+@export_range(1, 10, 1) var hunter_lives: int = 3
 # how strongly the boid turns away from walls detected by its raycasts
 @export_range(0.0, 10.0, 0.1) var wall_avoidance_weight: float = 4.0
 # radius (in pixels) in which a boid sees its neighbors (for alignment and cohesion)
-@export_range(20.0, 300.0, 1.0) var vision_radius: float = 90.0
+@export_range(15.0, 300.0, 1.0) var vision_radius: float = 60.0
 # length (in pixels) of the forward ray, the side rays get shorter toward the edges
 @export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
 # angle (in degrees) between the forward ray and the outermost side ray

@@ -3,8 +3,14 @@
 [ext_resource type="PackedScene" uid="uid://durgnwkqu0wel" path="res://flock/boid.tscn" id="1_boid"]
 [ext_resource type="Script" path="res://flock/hunter.gd" id="2_hunter"]
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_hunter"]
+radius = 7.0
+
 [node name="Hunter" instance=ExtResource("1_boid")]
 script = ExtResource("2_hunter")
 
-[node name="Sprite2D" parent="." index="0"]
-scale = Vector2(0.072, 0.052)
+[node name="Body" parent="." index="0"]
+scale = Vector2(1.4, 1.4)
+
+[node name="CollisionShape2D" parent="." index="1"]
+shape = SubResource("CircleShape2D_hunter")

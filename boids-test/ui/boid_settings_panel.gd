@@ -48,7 +48,7 @@ func _ready() -> void:
 			float(range_values[1]),
 			step,
 			settings.get(property_name),
-			func(value: float) -> void: settings.set(property_name, value)
+			func(value: float) -> void: set_setting(property_name, value)
 		)
 
 	var reset_button: Button = Button.new()
@@ -92,6 +92,14 @@ func add_slider(label_text: String, min_value: float, max_value: float, step: fl
 		on_changed.call(new_value)
 	)
 	return slider
+
+
+## Writes a slider value into the settings, as a whole number if the property is an int (e.g. hunter_lives).
+func set_setting(property_name: String, value: float) -> void:
+	if typeof(settings.get(property_name)) == TYPE_INT:
+		settings.set(property_name, int(value))
+	else:
+		settings.set(property_name, value)
 
 
 ## Moves every settings slider back to its default, which also updates the resource.

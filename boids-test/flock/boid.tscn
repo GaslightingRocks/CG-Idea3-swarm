@@ -1,32 +1,31 @@
 [gd_scene format=3 uid="uid://durgnwkqu0wel"]
 
 [ext_resource type="Script" uid="uid://cyd07fjm8wu1u" path="res://flock/boid.gd" id="1_vrn0v"]
-[ext_resource type="Texture2D" uid="uid://fxx5ibtrk31a" path="res://assets/triangle-png-28.png" id="2_tri"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bdhaf"]
-size = Vector2(15.5, 13)
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 5.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_vision"]
 resource_local_to_scene = true
-radius = 50.0
+radius = 60.0
 
 [node name="Boid" type="Area2D" unique_id=426703174 groups=["boid"]]
 collision_layer = 2
-collision_mask = 2
+collision_mask = 0
+monitoring = false
 script = ExtResource("1_vrn0v")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=568854606]
-position = Vector2(2.16, 0)
-scale = Vector2(0.05521127, 0.04)
-texture = ExtResource("2_tri")
+[node name="Body" type="Polygon2D" parent="." unique_id=568854606]
+antialiased = true
+polygon = PackedVector2Array(6, 0, -4, -4, -2.5, 0, -4, 4)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1143057902]
-position = Vector2(2.25, 0)
-shape = SubResource("RectangleShape2D_bdhaf")
+shape = SubResource("CircleShape2D_body")
 
 [node name="Vision" type="Area2D" parent="." unique_id=115852130]
 collision_layer = 0
 collision_mask = 2
+monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Vision" unique_id=1444294068]
 shape = SubResource("CircleShape2D_vision")
