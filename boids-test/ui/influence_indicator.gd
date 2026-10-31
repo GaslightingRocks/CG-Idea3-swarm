@@ -2,7 +2,7 @@ class_name InfluenceIndicator
 extends Control
 
 ## Draws the player's force in the middle of the screen: a faint ring for full strength,
-## a small ring for the dead zone and an arrow whose direction and length show the current force.
+## a second ring for the current strength (mouse wheel) and an arrow in the current direction.
 ## Covers the whole screen but ignores the mouse, so it never blocks clicks.
 
 # where the force comes from
@@ -23,10 +23,13 @@ func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var faint: Color = Color(color, color.a * 0.25)
 
-	# Full-strength ring and dead zone, scaled to the indicator size
+	# Full-strength ring, current-strength ring and the strength in percent below
+	var strength: float = player_influence.strength
 	draw_arc(center, indicator_radius, 0.0, TAU, 64, faint, 2.0, true)
-	var dead_zone_radius: float = indicator_radius * player_influence.dead_zone / player_influence.max_mouse_distance
-	draw_arc(center, dead_zone_radius, 0.0, TAU, 32, faint, 2.0, true)
+	if strength > 0.0:
+		draw_arc(center, indicator_radius * strength, 0.0, TAU, 64, Color(color, color.a * 0.5), 2.0, true)
+	var font: Font = ThemeDB.fallback_font
+	draw_string(font, center + Vector2(-60, indicator_radius + 28), "Kraft %d%%" % roundi(strength * 100.0), HORIZONTAL_ALIGNMENT_CENTER, 120, 18, faint * Color(1, 1, 1, 3))
 
 	var force: Vector2 = player_influence.get_force()
 	if force.is_zero_approx():
