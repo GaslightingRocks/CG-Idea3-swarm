@@ -19,9 +19,10 @@ script = ExtResource("1_onqr8")
 [node name="PlayerInfluence" type="Node" parent="."]
 script = ExtResource("5_influence")
 
-[node name="PlayerAbilities" type="Node" parent="." node_paths=PackedStringArray("flock")]
+[node name="PlayerAbilities" type="Node" parent="." node_paths=PackedStringArray("flock", "enemy_flock")]
 script = ExtResource("10_abilities")
 flock = NodePath("../Flock")
+enemy_flock = NodePath("../EnemyFlock")
 
 [node name="Flock" type="Node2D" parent="." node_paths=PackedStringArray("player_influence")]
 script = ExtResource("3_flock")

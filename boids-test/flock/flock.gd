@@ -6,6 +6,8 @@ extends Node2D
 
 ## Emitted whenever the number of flying, saved or lost boids changes (e.g. to update the HUD).
 signal counts_changed
+## Emitted when a boid of this flock gets hit but survives (e.g. a hunter hit by the attack), used for camera shake.
+signal boid_hit
 
 # scene every boid of this flock is made from (e.g. res://flock/hunter.tscn for an enemy flock)
 @export_file("*.tscn") var boid_scene_path: String = "res://flock/boid.tscn"
@@ -32,14 +34,23 @@ var player_force: Vector2 = Vector2.ZERO
 var center: Vector2 = Vector2.ZERO
 # average velocity of all boids, used so boids hitting a wall all turn to the same side
 var average_velocity: Vector2 = Vector2.ZERO
-# sum of the courage of all boids, the currency for special abilities
-var total_courage: float = 0.0
+# The swarm's courage supply, the currency for special abilities. It slowly fills up while enough of the
+# boids fly in a group (settings.courage_min_group_share) and is emptied by using abilities.
+var courage_pool: float = 0.0
+# share of boids (0 to 1) that currently count as "in a group"
+var group_share: float = 0.0
 
 # State of the special abilities, started by PlayerAbilities and read by the boids
 var dodge_time_left: float = 0.0
 var dodge_speed_multiplier: float = 1.0
 var attack_time_left: float = 0.0
+var attack_speed_multiplier: float = 1.0
+var attack_steer_multiplier: float = 1.0
 var attack_steer_weight: float = 0.0
+var attack_range: float = 0.0
+# flock whose boids are attacked, and the one of them the whole swarm currently charges at
+var attack_victims: Flock = null
+var attack_target: Boid = null
 # all boids that currently belong to this flock and are still flying
 var boids: Array[Boid] = []
 # boids that reached the goal / were killed
@@ -69,8 +80,11 @@ func _physics_process(delta: float) -> void:
 	# Godot processes a parent before its children, so this runs before the boids read the force
 	player_force = player_influence.get_force() if player_influence else Vector2.ZERO
 	update_center()
+	fill_courage_pool(delta)
 	dodge_time_left = maxf(dodge_time_left - delta, 0.0)
 	attack_time_left = maxf(attack_time_left - delta, 0.0)
+	if is_attacking():
+		attack_target = find_attack_target()
 
 
 ## True while the dodge ability is active: the boids are faster and hunters can't catch them.
@@ -95,41 +109,81 @@ func start_dodge(duration: float, speed_multiplier: float) -> void:
 		boid.velocity = direction.normalized() * boid.settings.speed * speed_multiplier
 
 
-## Starts the attack for the given time. steer_weight is how strongly the boids fly at hunters.
-func start_attack(duration: float, steer_weight: float) -> void:
+## Starts the attack: the whole swarm lunges at the nearest boid of the victims flock (within range),
+## flies faster and turns sharper for the given time.
+func start_attack(duration: float, victims: Flock, range_px: float, speed_multiplier: float,
+		steer_multiplier: float, steer_weight: float) -> void:
 	attack_time_left = duration
+	attack_victims = victims
+	attack_range = range_px
+	attack_speed_multiplier = speed_multiplier
+	attack_steer_multiplier = steer_multiplier
 	attack_steer_weight = steer_weight
+	attack_target = find_attack_target()
 
-
-## Pays the given amount from the flock's courage, taken from all boids in proportion to their courage.
-## Returns false (and pays nothing) if the flock doesn't have enough courage.
-func spend_courage(amount: float) -> bool:
-	if total_courage < amount or total_courage <= 0.0:
-		return false
-	var remaining_factor: float = (total_courage - amount) / total_courage
+	# Lunge: every boid turns toward the target at once (or the mouse direction if there's none)
+	var lunge_point: Vector2 = attack_target.global_position if attack_target else center + player_force * 100.0
 	for boid: Boid in boids:
-		boid.courage *= remaining_factor
-	total_courage -= amount
+		var direction: Vector2 = lunge_point - boid.global_position
+		if not direction.is_zero_approx():
+			boid.velocity = direction.normalized() * boid.settings.speed * speed_multiplier
+
+
+## Returns the victim closest to the swarm's center within attack_range, or null.
+func find_attack_target() -> Boid:
+	if attack_victims == null:
+		return null
+	var nearest: Boid = null
+	var nearest_distance: float = attack_range
+	for victim: Boid in attack_victims.boids:
+		var distance: float = center.distance_to(victim.global_position)
+		if distance < nearest_distance:
+			nearest = victim
+			nearest_distance = distance
+	return nearest
+
+
+## Fills the courage pool, but only while at least courage_min_group_share of the boids fly in a group.
+## The more boids are in a group, the faster it fills.
+func fill_courage_pool(delta: float) -> void:
+	if group_share >= settings.courage_min_group_share:
+		courage_pool += settings.courage_fill_rate * group_share * delta
+	courage_pool = minf(courage_pool, settings.courage_pool_max)
+
+
+## Pays the given amount from the courage pool. Returns false (and pays nothing) if there isn't enough.
+func spend_courage(amount: float) -> bool:
+	if courage_pool < amount:
+		return false
+	courage_pool -= amount
 	return true
 
 
-## Calculates center of mass, average velocity and total courage once, instead of every boid doing it on its own.
+## Number of own-flock neighbors a boid needs in sight to count as "in a group":
+## courage_group_percent of all boids of the flock, but at least 1.
+func group_size_needed() -> int:
+	return maxi(1, ceili(settings.courage_group_percent * boids.size()))
+
+
+## Calculates center of mass, average velocity and group share once, instead of every boid doing it on its own.
 func update_center() -> void:
 	if boids.is_empty():
 		center = global_position
 		average_velocity = Vector2.ZERO
-		total_courage = 0.0
+		group_share = 0.0
 		return
 	var position_sum: Vector2 = Vector2.ZERO
 	var velocity_sum: Vector2 = Vector2.ZERO
-	total_courage = 0.0
+	var in_group_count: int = 0
 	for boid: Boid in boids:
 		position_sum += boid.global_position
 		velocity_sum += boid.velocity
-		total_courage += boid.courage
+		if boid.in_group:
+			in_group_count += 1
 	# Strays are pulled toward their home spot (via flock_pull_weight) instead of their center of mass
 	center = global_position if stray_group else position_sum / boids.size()
 	average_velocity = velocity_sum / boids.size()
+	group_share = float(in_group_count) / boids.size()
 
 
 ## Spawns or removes boids until exactly the given number of boids exists.

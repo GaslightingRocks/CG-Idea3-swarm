@@ -42,8 +42,8 @@ extends Resource
 # Courage: every boid has its own courage between 0 (scared) and 1 (brave).
 # courage of a newly spawned boid
 @export_range(0.0, 1.0, 0.05) var courage_start: float = 0.5
-# visible neighbors of the own flock a boid needs to count as "in a group"
-@export_range(1, 20, 1) var courage_group_size: int = 4
+# a boid counts as "in a group" when it sees at least this share of all boids of its flock (0.1 = 10 %)
+@export_range(0.01, 0.5, 0.01) var courage_group_percent: float = 0.08
 # courage gained per second while in a group / lost per second while alone
 @export_range(0.0, 2.0, 0.01) var courage_gain: float = 0.15
 @export_range(0.0, 2.0, 0.01) var courage_loss: float = 0.25
@@ -51,6 +51,13 @@ extends Resource
 @export_range(0.0, 1.0, 0.05) var courage_min_follow: float = 0.4
 # wall avoidance multiplier for a boid with 0 courage, scared boids keep more distance (brave ones use 1)
 @export_range(1.0, 4.0, 0.1) var courage_wall_caution: float = 1.8
+# Courage pool: the swarm's currency for abilities, a float that slowly fills up.
+# share of the boids that must be "in a group" for the pool to fill at all (0.5 = half of the swarm)
+@export_range(0.0, 1.0, 0.05) var courage_min_group_share: float = 0.5
+# courage added per second when every boid is in a group (fewer boids in groups fill it slower)
+@export_range(0.0, 20.0, 0.1) var courage_fill_rate: float = 3.0
+# most courage the pool can hold
+@export_range(10.0, 500.0, 5.0) var courage_pool_max: float = 100.0
 # if true, a boid touching a wall is lost; if false, it slides along the wall
 @export var lethal_walls: bool = false
 # how fast the rotation follows the velocity (0 = never, 1 = instantly)

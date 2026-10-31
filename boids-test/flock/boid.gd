@@ -36,6 +36,8 @@ var velocity: Vector2 = Vector2.ZERO
 var state: State = State.FLYING
 # between 0 (scared) and 1 (brave): rises while the boid flies in a group, sinks while it's alone
 var courage: float = 0.5
+# true while the boid sees enough boids of its flock, the flock's courage pool only fills if enough boids are
+var in_group: bool = false
 
 # push away from walls, sum of the wall normals the rays hit (recalculated every WALL_CHECK_INTERVAL steps)
 var wall_push: Vector2 = Vector2.ZERO
@@ -90,15 +92,21 @@ func _physics_process(delta: float) -> void:
 	debug_behavior_force = behavior_force()
 	var steering: Vector2 = debug_flocking_force + debug_player_force + debug_wall_force + debug_behavior_force
 
+	# Dodging makes the swarm faster, attacking makes it faster and much more agile
+	var speed: float = settings.speed
+	var max_steer: float = settings.max_steer_force
+	if flock and flock.is_dodging():
+		speed *= flock.dodge_speed_multiplier
+	if flock and flock.is_attacking():
+		speed *= flock.attack_speed_multiplier
+		max_steer *= flock.attack_steer_multiplier
+
 	# Limits how much the velocity can change per frame, which smooths out sudden turns
-	velocity += steering.limit_length(settings.max_steer_force)
+	velocity += steering.limit_length(max_steer)
 	if velocity.is_zero_approx():
 		velocity = Vector2.RIGHT.rotated(rotation)
 
-	# Enforces constant speed (faster while the flock dodges)
-	var speed: float = settings.speed
-	if flock and flock.is_dodging():
-		speed *= flock.dodge_speed_multiplier
+	# Enforces constant speed
 	velocity = velocity.normalized() * speed
 
 	# Touching a wall costs the boid if lethal_walls is switched on in the settings
@@ -121,9 +129,11 @@ func apply_setting_changes() -> void:
 		vision_shape.radius = settings.vision_radius
 
 
-## Courage rises while the boid has at least courage_group_size neighbors of its own flock and sinks otherwise.
+## Courage rises while the boid flies in a group and sinks otherwise. "In a group" means it sees
+## at least courage_group_percent of all boids of its flock (see Flock.group_size_needed()).
 func update_courage(delta: float) -> void:
-	if neighbor_count >= settings.courage_group_size:
+	in_group = flock != null and neighbor_count >= flock.group_size_needed()
+	if in_group:
 		courage += settings.courage_gain * delta
 	else:
 		courage -= settings.courage_loss * delta
@@ -242,9 +252,11 @@ func flocking_force() -> Vector2:
 ## Extra steering that makes this kind of boid special. Normal boids flee from the hunters they can see,
 ## the Hunter class overrides this to chase its prey instead.
 func behavior_force() -> Vector2:
-	# While the flock attacks, the boid flies at the nearest hunter instead of fleeing
-	if flock and flock.is_attacking() and nearest_hunter:
-		return steer_towards(nearest_hunter.global_position - global_position) * flock.attack_steer_weight
+	# While the flock attacks, the boid charges at the nearest hunter it sees, or else at the swarm's target
+	if flock and flock.is_attacking():
+		var target: Boid = nearest_hunter if nearest_hunter else flock.attack_target
+		if target and is_instance_valid(target):
+			return steer_towards(target.global_position - global_position) * flock.attack_steer_weight
 	return steer_towards(hunter_threat) * settings.flee_weight
 
 

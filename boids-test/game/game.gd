@@ -29,6 +29,8 @@ func _ready() -> void:
 
 	flock.counts_changed.connect(update_hud)
 	enemy_flock.counts_changed.connect(update_hud)
+	# Every hunter hit by the attack shakes the camera a little
+	enemy_flock.boid_hit.connect(func() -> void: camera.shake(6.0))
 	for strays: Flock in stray_flocks:
 		strays.counts_changed.connect(update_hud)
 	update_hud()
@@ -49,7 +51,8 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	# Courage and running abilities change all the time, so they're updated every frame
-	hud.show_courage(flock.total_courage, flock.boids.size())
+	var filling: bool = flock.group_share >= flock.settings.courage_min_group_share
+	hud.show_courage(flock.courage_pool, flock.settings.courage_pool_max, filling)
 	hud.show_abilities(abilities.get_status_text())
 
 

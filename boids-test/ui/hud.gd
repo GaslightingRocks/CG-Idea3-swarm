@@ -22,9 +22,10 @@ func show_message(text: String) -> void:
 	message_label.visible = text != ""
 
 
-## Shows the summed up courage of the swarm and how much it could have at most (every boid fully brave).
-func show_courage(total: float, maximum: int) -> void:
-	courage_label.text = "Mut: %d / %d" % [roundi(total), maximum]
+## Shows the swarm's courage pool, how full it can get and whether it is filling right now.
+func show_courage(pool: float, maximum: float, filling: bool) -> void:
+	var state: String = "" if filling else "  (Schwarm zu verstreut)"
+	courage_label.text = "Mut: %.1f / %d%s" % [pool, roundi(maximum), state]
 
 
 ## Shows the ability keys, costs and which ability is running.
