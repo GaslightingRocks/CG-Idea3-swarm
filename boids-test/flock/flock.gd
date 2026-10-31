@@ -7,8 +7,11 @@ extends Node2D
 ## Emitted whenever the number of flying, saved or lost boids changes (e.g. to update the HUD).
 signal counts_changed
 
-const BOID_SCENE_PATH: String = "res://flock/boid.tscn"
-
+# scene every boid of this flock is made from (e.g. res://flock/hunter.tscn for an enemy flock)
+@export_file("*.tscn") var boid_scene_path: String = "res://flock/boid.tscn"
+# true: every boid gets a random color, false: all boids get boid_color
+@export var random_colors: bool = true
+@export var boid_color: Color = Color.WHITE
 # number of boids spawned at the start
 @export var boid_count: int = 100
 # radius (in pixels) around this node in which the boids spawn
@@ -26,18 +29,18 @@ var center: Vector2 = Vector2.ZERO
 var average_velocity: Vector2 = Vector2.ZERO
 # all boids that currently belong to this flock and are still flying
 var boids: Array[Boid] = []
-# boids that reached the goal / hit a wall
+# boids that reached the goal / were killed
 var saved_count: int = 0
 var lost_count: int = 0
-# Loaded in _ready() instead of with preload(): boid.gd refers to Flock, so preloading the boid scene
-# here would make Godot load boid.tscn -> boid.gd -> flock.gd -> boid.tscn in a circle ("Parse Error: Busy").
+# Loaded in _ready() from a path instead of with preload(): boid.gd refers to Flock, so preloading the boid
+# scene here would make Godot load boid.tscn -> boid.gd -> flock.gd -> boid.tscn in a circle ("Parse Error: Busy").
 var boid_scene: PackedScene
 
 
 func _ready() -> void:
 	if settings == null:
 		settings = BoidSettings.new()
-	boid_scene = load(BOID_SCENE_PATH)
+	boid_scene = load(boid_scene_path)
 	center = global_position
 	randomize()
 
@@ -80,7 +83,7 @@ func set_boid_count(value: int) -> void:
 	counts_changed.emit()
 
 
-## Called by a boid that hit a wall.
+## Called by a boid that was killed.
 func on_boid_lost(boid: Boid) -> void:
 	boids.erase(boid)
 	lost_count += 1
@@ -102,8 +105,8 @@ func spawn_boid() -> void:
 	add_child(boid)
 	boids.append(boid)
 
-	# Assigns a random RGB color to the boid (alpha remains 1 for full visibility)
-	boid.modulate = Color(randf(), randf(), randf(), 1)
+	# Assigns a random RGB color (alpha remains 1 for full visibility) or the flock's fixed color
+	boid.modulate = Color(randf(), randf(), randf(), 1) if random_colors else boid_color
 	boid.global_position = random_free_position()
 	# Tells the physics interpolation that this was a teleport, not a movement to smooth out
 	boid.reset_physics_interpolation()

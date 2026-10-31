@@ -5,10 +5,11 @@
 [ext_resource type="Script" path="res://levels/start_zone.gd" id="3_start"]
 [ext_resource type="Script" path="res://levels/goal_zone.gd" id="4_goal"]
 
-[node name="Level2" type="Node2D" unique_id=2075216894 node_paths=PackedStringArray("start_zone", "goal_zone")]
+[node name="Level2" type="Node2D" unique_id=2075216894 node_paths=PackedStringArray("start_zone", "goal_zone", "enemy_zone")]
 script = ExtResource("2_level")
 start_zone = NodePath("StartZone")
 goal_zone = NodePath("GoalZone")
+enemy_zone = NodePath("EnemyZone")
 
 [node name="Rock" type="Polygon2D" parent="."]
 color = Color(0.36, 0.3, 0.25, 1)
@@ -40,3 +41,10 @@ script = ExtResource("3_start")
 [node name="GoalZone" type="Area2D" parent="."]
 position = Vector2(1600, 230)
 script = ExtResource("4_goal")
+
+[node name="EnemyZone" type="Node2D" parent="."]
+position = Vector2(1040, 720)
+script = ExtResource("3_start")
+radius = 70.0
+color = Color(1, 0.25, 0.25, 0.25)
+label = "GEGNER"

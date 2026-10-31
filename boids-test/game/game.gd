@@ -1,31 +1,36 @@
 extends Node2D
 
-## Root of the game: holds the level, the flock, the camera and the UI.
-## Places the flock in the level's start zone, keeps the HUD up to date and restarts the round.
+## Root of the game: holds the level, the flocks, the camera and the UI.
+## Places the flocks in the level's zones, keeps the HUD up to date and restarts the round.
 
 @onready var level: Level = $Level
 @onready var flock: Flock = $Flock
+@onready var enemy_flock: Flock = $EnemyFlock
 @onready var camera: SwarmCamera = $Camera2D
 @onready var hud: Hud = $UI/Hud
 
 
 func _ready() -> void:
-	# The flock waits two physics frames before spawning, so it can still be moved to the start zone here
-	flock.global_position = level.start_zone.global_position
-	flock.spawn_radius = level.start_zone.radius
-	flock.center = flock.global_position
+	# The flocks wait two physics frames before spawning, so they can still be moved to their zones here
+	place_flock(flock, level.start_zone)
+	if level.enemy_zone:
+		place_flock(enemy_flock, level.enemy_zone)
+	else:
+		enemy_flock.boid_count = 0
+
 	camera.global_position = flock.global_position
 	# Tells the physics interpolation that the camera jumped there, instead of smoothly flying there
 	camera.reset_physics_interpolation()
 
 	flock.counts_changed.connect(update_hud)
+	enemy_flock.counts_changed.connect(update_hud)
 	update_hud()
 
-	# Child nodes are ready before their parent, so the flock already has its settings here
-	var settings_panel: BoidSettingsPanel = BoidSettingsPanel.new()
-	settings_panel.settings = flock.settings
-	add_child(settings_panel)
+	# Child nodes are ready before their parent, so the flocks already have their settings here
+	var settings_panel: BoidSettingsPanel = add_settings_panel(flock, "Boid Settings", Vector2(8, 8))
 	settings_panel.add_slider("Boid Count", 0, 500, 1, flock.boid_count, func(value: float) -> void: flock.set_boid_count(int(value)))
+	var enemy_panel: BoidSettingsPanel = add_settings_panel(enemy_flock, "Hunter Settings", Vector2(470, 8))
+	enemy_panel.add_slider("Hunter Count", 0, 100, 1, enemy_flock.boid_count, func(value: float) -> void: enemy_flock.set_boid_count(int(value)))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -34,11 +39,28 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 
 
-## Updates the counters and shows the result once no boid is flying anymore.
+## Moves a flock into a zone of the level, so its boids spawn there.
+func place_flock(target: Flock, zone: StartZone) -> void:
+	target.global_position = zone.global_position
+	target.spawn_radius = zone.radius
+	target.center = target.global_position
+
+
+## Creates a slider panel for the settings of a flock.
+func add_settings_panel(target: Flock, title: String, panel_position: Vector2) -> BoidSettingsPanel:
+	var panel: BoidSettingsPanel = BoidSettingsPanel.new()
+	panel.settings = target.settings
+	panel.title_text = title
+	panel.panel_position = panel_position
+	add_child(panel)
+	return panel
+
+
+## Updates the counters and shows the result once none of the player's boids is flying anymore.
 func update_hud() -> void:
 	var saved: int = flock.saved_count
 	var lost: int = flock.lost_count
-	hud.show_counts(flock.boids.size(), saved, lost)
+	hud.show_counts(flock.boids.size(), saved, lost, enemy_flock.boids.size())
 
 	if flock.boids.is_empty() and saved + lost > 0:
 		hud.show_message("Runde vorbei: %d von %d gerettet\nR: Neustart" % [saved, saved + lost])

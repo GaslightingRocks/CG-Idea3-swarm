@@ -21,6 +21,10 @@ extends Resource
 @export_range(16.0, 100.0, 1.0) var separation_radius: float = 28.0
 # how strongly the boid follows the mouse force of the player
 @export_range(0.0, 10.0, 0.1) var player_influence_weight: float = 2.0
+# how strongly a normal boid flees from hunters it can see
+@export_range(0.0, 10.0, 0.1) var flee_weight: float = 1.5
+# how strongly a hunter chases the nearest prey it can see (only used by hunters)
+@export_range(0.0, 10.0, 0.1) var chase_weight: float = 2.0
 # how strongly the boid turns away from walls detected by its raycasts
 @export_range(0.0, 10.0, 0.1) var wall_avoidance_weight: float = 4.0
 # radius (in pixels) in which a boid sees its neighbors (for alignment and cohesion)
@@ -29,7 +33,7 @@ extends Resource
 @export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
 # angle (in degrees) between the forward ray and the outermost side ray
 @export_range(10.0, 90.0, 1.0) var wall_ray_spread: float = 60.0
-# if true, a boid touching a wall is lost; if false, it slides along the wall (handy for tuning)
-@export var lethal_walls: bool = true
+# if true, a boid touching a wall is lost; if false, it slides along the wall
+@export var lethal_walls: bool = false
 # how fast the rotation follows the velocity (0 = never, 1 = instantly)
 @export_range(0.0, 1.0, 0.01) var rotation_smoothing: float = 0.4

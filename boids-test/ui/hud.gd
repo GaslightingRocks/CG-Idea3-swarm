@@ -8,9 +8,9 @@ extends Control
 @onready var message_label: Label = $Message
 
 
-## Shows how many boids are still flying, saved and lost.
-func show_counts(flying: int, saved: int, lost: int) -> void:
-	counts_label.text = "Unterwegs: %d\nGerettet: %d\nVerloren: %d\n\nR: Neustart" % [flying, saved, lost]
+## Shows how many of the player's boids are still flying, saved and lost, and how many hunters are left.
+func show_counts(flying: int, saved: int, lost: int, hunters: int) -> void:
+	counts_label.text = "Unterwegs: %d\nGerettet: %d\nVerloren: %d\nJäger: %d\n\nR: Neustart" % [flying, saved, lost, hunters]
 
 
 ## Shows a message in the middle of the screen, an empty text hides it.

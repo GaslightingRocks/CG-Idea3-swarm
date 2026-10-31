@@ -6,16 +6,21 @@ extends CanvasLayer
 
 # resource edited by the sliders, has to be set before the panel enters the tree
 var settings: BoidSettings
-# untouched instance used to restore the default values
-var defaults: BoidSettings = BoidSettings.new()
+# heading of the panel and its top left corner on screen, can be set before the panel enters the tree
+var title_text: String = "Boid Settings"
+var panel_position: Vector2 = Vector2(8, 8)
+# copy of the values at the start, used to restore them with the reset button
+var defaults: BoidSettings
 var sliders: Dictionary[String, HSlider] = {}
 var panel: PanelContainer
 var list: VBoxContainer
 
 
 func _ready() -> void:
+	defaults = settings.duplicate()
+
 	panel = PanelContainer.new()
-	panel.position = Vector2(8, 8)
+	panel.position = panel_position
 	add_child(panel)
 
 	var margin: MarginContainer = MarginContainer.new()
@@ -27,7 +32,7 @@ func _ready() -> void:
 	margin.add_child(list)
 
 	var title: Label = Label.new()
-	title.text = "Boid Settings (H to hide)"
+	title.text = title_text + " (H to hide)"
 	list.add_child(title)
 
 	# Builds one slider per range property, using the min/max/step from @export_range

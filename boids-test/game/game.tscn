@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://player/swarm_camera.gd" id="6_camera"]
 [ext_resource type="Script" path="res://ui/influence_indicator.gd" id="7_indicator"]
 [ext_resource type="Script" path="res://ui/hud.gd" id="8_hud"]
+[ext_resource type="Resource" path="res://flock/enemy_boid_settings.tres" id="9_enemy_settings"]
 
 [node name="GameScene" type="Node2D" unique_id=462784093]
 script = ExtResource("1_onqr8")
@@ -21,6 +22,15 @@ script = ExtResource("5_influence")
 script = ExtResource("3_flock")
 settings = ExtResource("4_settings")
 player_influence = NodePath("../PlayerInfluence")
+
+[node name="EnemyFlock" type="Node2D" parent="."]
+script = ExtResource("3_flock")
+boid_scene_path = "res://flock/hunter.tscn"
+random_colors = false
+boid_color = Color(1, 0.2, 0.2, 1)
+boid_count = 12
+spawn_radius = 70.0
+settings = ExtResource("9_enemy_settings")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=253825087 node_paths=PackedStringArray("flock")]
 zoom = Vector2(2, 2)
@@ -58,7 +68,7 @@ anchor_right = 1.0
 offset_left = -320.0
 offset_top = 16.0
 offset_right = -24.0
-offset_bottom = 200.0
+offset_bottom = 240.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 2

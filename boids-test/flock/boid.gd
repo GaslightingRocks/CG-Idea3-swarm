@@ -54,6 +54,7 @@ func _physics_process(_delta: float) -> void:
 	var wall_push: Vector2 = wall_force()
 	var steering: Vector2 = flocking_force() + flock_pull_force() + player_force(wall_push)
 	steering += wall_push * settings.wall_avoidance_weight
+	steering += behavior_force()
 
 	# Limits how much the velocity can change per frame, which smooths out sudden turns
 	velocity += steering.limit_length(settings.max_steer_force)
@@ -114,16 +115,37 @@ func steer_towards(direction: Vector2) -> Vector2:
 	return direction.normalized() * settings.speed - velocity
 
 
-## Calculates flocking forces (alignment, cohesion, and separation) based on visible neighbors.
+## Returns true if the other boid belongs to the same flock (only those flock together).
+func is_same_flock(other: Boid) -> bool:
+	return other.flock == flock
+
+
+## Extra steering that makes this kind of boid special. Normal boids flee from hunters they can see,
+## the Hunter class overrides this to chase its prey instead.
+func behavior_force() -> Vector2:
+	var away: Vector2 = Vector2.ZERO
+	for boid: Boid in visible_boids:
+		if boid is Hunter:
+			var offset: Vector2 = global_position - boid.global_position
+			var distance_squared: float = offset.length_squared()
+			# Closer hunters are much scarier
+			if distance_squared > 0.0:
+				away += offset / distance_squared
+	return steer_towards(away) * settings.flee_weight
+
+
+## Calculates flocking forces (alignment, cohesion, and separation) based on visible neighbors of the same flock.
 func flocking_force() -> Vector2:
 	remove_freed_boids()
-	if visible_boids.is_empty():
-		return Vector2.ZERO
 
+	var neighbor_count: int = 0
 	var avg_velocity: Vector2 = Vector2.ZERO
 	var center: Vector2 = Vector2.ZERO
 	var separation: Vector2 = Vector2.ZERO
 	for boid: Boid in visible_boids:
+		if not is_same_flock(boid):
+			continue
+		neighbor_count += 1
 		avg_velocity += boid.velocity
 		center += boid.global_position
 		var offset: Vector2 = global_position - boid.global_position
@@ -131,7 +153,9 @@ func flocking_force() -> Vector2:
 		# Only neighbors inside the personal space push away, closer ones much stronger
 		if distance > 0.0 and distance < settings.separation_radius:
 			separation += offset / (distance * distance)
-	center /= visible_boids.size()
+	if neighbor_count == 0:
+		return Vector2.ZERO
+	center /= neighbor_count
 
 	# Alignment: Match flight direction with neighbors
 	var force: Vector2 = steer_towards(avg_velocity) * settings.alignment_weight
@@ -202,7 +226,7 @@ func hits_wall_ahead() -> bool:
 	return not cast_wall_ray(global_position, tip).is_empty()
 
 
-## Called when the boid hits a wall: it leaves its flock and disappears.
+## Called when the boid is killed (by a hunter, or by a wall if lethal_walls is on): it leaves its flock and disappears.
 func die() -> void:
 	if state != State.FLYING:
 		return
@@ -233,6 +257,9 @@ func resolve_overlaps() -> void:
 	var push: Vector2 = Vector2.ZERO
 	var min_distance: float = BODY_RADIUS * 2.0
 	for boid: Boid in visible_boids:
+		# Boids of other flocks are handled by their own rules (e.g. hunters kill on contact)
+		if not is_same_flock(boid):
+			continue
 		var offset: Vector2 = global_position - boid.global_position
 		var distance: float = offset.length()
 		if distance >= min_distance:
