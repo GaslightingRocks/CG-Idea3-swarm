@@ -47,6 +47,12 @@ var separation_push: Vector2 = Vector2.ZERO
 var overlap_push: Vector2 = Vector2.ZERO
 var hunter_threat: Vector2 = Vector2.ZERO
 
+# steering forces of the last physics step, only stored for the debug overlay
+var debug_flocking_force: Vector2 = Vector2.ZERO
+var debug_player_force: Vector2 = Vector2.ZERO
+var debug_wall_force: Vector2 = Vector2.ZERO
+var debug_behavior_force: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
 	if settings == null:
@@ -63,9 +69,12 @@ func _physics_process(_delta: float) -> void:
 	scan_neighbors()
 	update_wall_push()
 
-	var steering: Vector2 = flocking_force() + flock_pull_force() + player_force()
-	steering += wall_push * settings.wall_avoidance_weight
-	steering += behavior_force()
+	# Kept in member variables so the debug overlay (F3) can draw them
+	debug_flocking_force = flocking_force() + flock_pull_force()
+	debug_player_force = player_force()
+	debug_wall_force = wall_push * settings.wall_avoidance_weight
+	debug_behavior_force = behavior_force()
+	var steering: Vector2 = debug_flocking_force + debug_player_force + debug_wall_force + debug_behavior_force
 
 	# Limits how much the velocity can change per frame, which smooths out sudden turns
 	velocity += steering.limit_length(settings.max_steer_force)

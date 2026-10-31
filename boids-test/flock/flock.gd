@@ -41,6 +41,8 @@ func _ready() -> void:
 	if settings == null:
 		settings = BoidSettings.new()
 	boid_scene = load(boid_scene_path)
+	if boid_scene == null:
+		push_error("Flock '%s': boid scene '%s' could not be loaded, no boids will spawn." % [name, boid_scene_path])
 	center = global_position
 	randomize()
 
@@ -75,7 +77,9 @@ func update_center() -> void:
 func set_boid_count(value: int) -> void:
 	boid_count = value
 	while boids.size() < boid_count:
-		spawn_boid()
+		# Stops instead of looping forever if a boid can't be created
+		if not spawn_boid():
+			break
 	while boids.size() > boid_count:
 		var boid: Boid = boids.pop_back()
 		remove_child(boid)
@@ -98,8 +102,13 @@ func on_boid_saved(boid: Boid) -> void:
 
 
 ## Instantiates a single boid and places it at a random free spot around the flock.
-func spawn_boid() -> void:
+func spawn_boid() -> bool:
+	if boid_scene == null:
+		return false
 	var boid: Boid = boid_scene.instantiate() as Boid
+	if boid == null:
+		push_error("Flock '%s': '%s' has no Boid script on its root node (maybe a script error?)." % [name, boid_scene_path])
+		return false
 	boid.settings = settings
 	boid.flock = self
 	add_child(boid)
@@ -110,6 +119,7 @@ func spawn_boid() -> void:
 	boid.global_position = random_free_position()
 	# Tells the physics interpolation that this was a teleport, not a movement to smooth out
 	boid.reset_physics_interpolation()
+	return true
 
 
 ## Returns a random position within spawn_radius around the flock that is not inside a wall.

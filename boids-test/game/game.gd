@@ -32,6 +32,12 @@ func _ready() -> void:
 	var enemy_panel: BoidSettingsPanel = add_settings_panel(enemy_flock, "Hunter Settings", Vector2(470, 8))
 	enemy_panel.add_slider("Hunter Count", 0, 100, 1, enemy_flock.boid_count, func(value: float) -> void: enemy_flock.set_boid_count(int(value)))
 
+	var debug_overlay: DebugOverlay = DebugOverlay.new()
+	debug_overlay.flocks.append(flock)
+	debug_overlay.flocks.append(enemy_flock)
+	debug_overlay.camera = camera
+	add_child(debug_overlay)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	# "restart" is defined in Project Settings > Input Map (R by default)
