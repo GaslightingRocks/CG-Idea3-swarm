@@ -1,6 +1,12 @@
 class_name Boid
 extends Area2D
 
+# distance the boid keeps from a wall it slides along
+const WALL_SKIN: float = 2.0
+
+# physics layers the boid can't fly through (the level TileMapLayer is on layer 1)
+@export_flags_2d_physics var wall_collision_mask: int = 1
+
 ## Shared tuning values, assigned by the spawner. Falls back to the defaults when the scene runs on its own.
 var settings: BoidSettings
 
@@ -94,9 +100,25 @@ func remove_freed_boids() -> void:
 			visible_boids.remove_at(i)
 
 
-## Moves the boid and wraps its position around screen edges if it goes out of bounds.
+## Moves the boid, slides along walls instead of passing through them and wraps around screen edges.
 func move() -> void:
-	global_position += velocity
+	var motion: Vector2 = velocity
+	# A few iterations so the boid also handles corners where it touches two walls at once
+	for i in 3:
+		if motion.is_zero_approx():
+			break
+		var hit: Dictionary = cast_wall_ray(global_position, global_position + motion + motion.normalized() * WALL_SKIN)
+		if hit.is_empty():
+			break
+		var normal: Vector2 = hit["normal"]
+		# Removes the part of the motion that points into the wall
+		motion = motion.slide(normal)
+		velocity = velocity.slide(normal)
+		# Flying straight into the wall leaves nothing to slide with, so it turns away instead
+		if velocity.is_zero_approx():
+			velocity = normal * settings.speed
+
+	global_position += motion
 
 	if global_position.x < 0:
 		global_position.x = screen_size.x
@@ -106,6 +128,15 @@ func move() -> void:
 		global_position.y = screen_size.y
 	if global_position.y > screen_size.y:
 		global_position.y = 0
+
+
+## Casts a ray against the level geometry and returns the hit, or an empty dictionary if nothing was hit.
+func cast_wall_ray(from: Vector2, to: Vector2) -> Dictionary:
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from, to, wall_collision_mask)
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+	if hit.is_empty() or not (hit["collider"] as Node).is_in_group("blocks"):
+		return {}
+	return hit
 
 
 ## Adds a neighboring boid to the tracking array when it enters the vision area.

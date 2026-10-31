@@ -17,6 +17,11 @@ func _ready() -> void:
 
 	screen_size = get_viewport_rect().size
 	randomize()
+
+	# Waits until the TileMapLayer has registered its collision shapes, so spawning can avoid the walls
+	for i in 2:
+		await get_tree().physics_frame
+
 	for i in boid_count:
 		spawn_boid()
 
@@ -60,7 +65,17 @@ func spawn_boid() -> void:
 	# Assigns a random RGB color to the boid (alpha remains 1 for full visibility)
 	boid.modulate = Color(randf(), randf(), randf(), 1)
 
-	# Calculates a random X and Y position within the screen boundaries minus the margin
-	var random_x: float = randf_range(margin, screen_size.x - margin)
-	var random_y: float = randf_range(margin, screen_size.y - margin)
-	boid.global_position = Vector2(random_x, random_y)
+	boid.global_position = random_free_position()
+
+
+## Returns a random position within the screen boundaries minus the margin that is not inside a wall.
+func random_free_position() -> Vector2:
+	var query: PhysicsPointQueryParameters2D = PhysicsPointQueryParameters2D.new()
+	for attempt in 50:
+		query.position = Vector2(
+			randf_range(margin, screen_size.x - margin),
+			randf_range(margin, screen_size.y - margin)
+		)
+		if get_world_2d().direct_space_state.intersect_point(query, 1).is_empty():
+			break
+	return query.position
