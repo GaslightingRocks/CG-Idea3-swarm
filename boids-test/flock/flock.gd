@@ -4,7 +4,7 @@ extends Node2D
 ## A swarm of boids. Spawns its boids around its own position and passes the player's force on to them.
 ## The boids are children of this node. A second swarm is simply a second Flock node with other settings.
 
-const BOID_SCENE: PackedScene = preload("res://flock/boid.tscn")
+const BOID_SCENE_PATH: String = "res://flock/boid.tscn"
 
 # number of boids spawned at the start
 @export var boid_count: int = 100
@@ -19,11 +19,15 @@ const BOID_SCENE: PackedScene = preload("res://flock/boid.tscn")
 var player_force: Vector2 = Vector2.ZERO
 # all boids that currently belong to this flock
 var boids: Array[Boid] = []
+# Loaded in _ready() instead of with preload(): boid.gd refers to Flock, so preloading the boid scene
+# here would make Godot load boid.tscn -> boid.gd -> flock.gd -> boid.tscn in a circle ("Parse Error: Busy").
+var boid_scene: PackedScene
 
 
 func _ready() -> void:
 	if settings == null:
 		settings = BoidSettings.new()
+	boid_scene = load(BOID_SCENE_PATH)
 	randomize()
 
 	# Waits until the TileMapLayer has registered its collision shapes, so spawning can avoid the walls
@@ -60,7 +64,7 @@ func set_boid_count(value: int) -> void:
 
 ## Instantiates a single boid and places it at a random free spot around the flock.
 func spawn_boid() -> void:
-	var boid: Boid = BOID_SCENE.instantiate() as Boid
+	var boid: Boid = boid_scene.instantiate() as Boid
 	boid.settings = settings
 	boid.flock = self
 	add_child(boid)
