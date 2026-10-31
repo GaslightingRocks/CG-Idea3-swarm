@@ -29,5 +29,7 @@ extends Resource
 @export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
 # angle (in degrees) between the forward ray and the outermost side ray
 @export_range(10.0, 90.0, 1.0) var wall_ray_spread: float = 60.0
+# if true, a boid touching a wall is lost; if false, it slides along the wall (handy for tuning)
+@export var lethal_walls: bool = true
 # how fast the rotation follows the velocity (0 = never, 1 = instantly)
 @export_range(0.0, 1.0, 0.01) var rotation_smoothing: float = 0.4

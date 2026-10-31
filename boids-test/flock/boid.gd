@@ -9,6 +9,11 @@ const WALL_RAY_COUNT: int = 7
 const SIDE_RAY_LENGTH_FACTOR: float = 0.6
 # radius (in pixels) of the circle the boid's body occupies, two boids are never closer than twice this
 const BODY_RADIUS: float = 8.0
+# distance (in pixels) from the boid's center to its tip, a wall closer than this in flight direction kills it
+const NOSE_LENGTH: float = 6.0
+
+# FLYING: on its way, SAVED: reached the goal, LOST: hit a wall
+enum State { FLYING, SAVED, LOST }
 
 # physics layers the boid can't fly through (the level TileMapLayer is on layer 1 "Walls")
 @export_flags_2d_physics var wall_collision_mask: int = 1
@@ -28,6 +33,7 @@ var ray_spread: float = 0.0
 var visible_boids: Array[Boid] = []
 # current velocity vector of boid
 var velocity: Vector2 = Vector2.ZERO
+var state: State = State.FLYING
 
 
 func _ready() -> void:
@@ -56,6 +62,12 @@ func _physics_process(_delta: float) -> void:
 
 	# Enforces constant speed
 	velocity = velocity.normalized() * settings.speed
+
+	# Touching a wall costs the boid (can be switched off with lethal_walls in the settings)
+	if settings.lethal_walls and hits_wall_ahead():
+		die()
+		return
+
 	move()
 	resolve_overlaps()
 
@@ -182,6 +194,32 @@ func remove_freed_boids() -> void:
 	for i in range(visible_boids.size() - 1, -1, -1):
 		if not is_instance_valid(visible_boids[i]):
 			visible_boids.remove_at(i)
+
+
+## Returns true if the boid's tip would touch a wall during this step's movement.
+func hits_wall_ahead() -> bool:
+	var tip: Vector2 = global_position + velocity + velocity.normalized() * NOSE_LENGTH
+	return not cast_wall_ray(global_position, tip).is_empty()
+
+
+## Called when the boid hits a wall: it leaves its flock and disappears.
+func die() -> void:
+	if state != State.FLYING:
+		return
+	state = State.LOST
+	if flock:
+		flock.on_boid_lost(self)
+	queue_free()
+
+
+## Called by the goal zone: the boid is saved, leaves its flock and disappears.
+func save() -> void:
+	if state != State.FLYING:
+		return
+	state = State.SAVED
+	if flock:
+		flock.on_boid_saved(self)
+	queue_free()
 
 
 ## Moves the boid and slides along walls instead of passing through them.

@@ -1,8 +1,14 @@
 [gd_scene format=3 uid="uid://det1yhaw44ewy"]
 
 [ext_resource type="Script" path="res://levels/level_wall.gd" id="1_wall"]
+[ext_resource type="Script" path="res://levels/level.gd" id="2_level"]
+[ext_resource type="Script" path="res://levels/start_zone.gd" id="3_start"]
+[ext_resource type="Script" path="res://levels/goal_zone.gd" id="4_goal"]
 
-[node name="Level2" type="Node2D" unique_id=2075216894]
+[node name="Level2" type="Node2D" unique_id=2075216894 node_paths=PackedStringArray("start_zone", "goal_zone")]
+script = ExtResource("2_level")
+start_zone = NodePath("StartZone")
+goal_zone = NodePath("GoalZone")
 
 [node name="Rock" type="Polygon2D" parent="."]
 color = Color(0.36, 0.3, 0.25, 1)
@@ -26,3 +32,11 @@ color = Color(0.36, 0.3, 0.25, 1)
 antialiased = true
 polygon = PackedVector2Array(640.0, 590.0, 640.0, 543.3, 630.0, 503.3, 610.0, 470.0, 573.3, 440.0, 520.0, 413.3, 463.3, 396.7, 403.3, 390.0, 366.7, 393.3, 353.3, 406.7, 340.0, 440.0, 326.7, 493.3, 333.3, 533.3, 360.0, 560.0, 413.3, 573.3, 493.3, 573.3, 543.3, 590.0, 563.3, 623.3, 590.0, 633.3, 623.3, 620.0)
 script = ExtResource("1_wall")
+
+[node name="StartZone" type="Node2D" parent="."]
+position = Vector2(480, 280)
+script = ExtResource("3_start")
+
+[node name="GoalZone" type="Area2D" parent="."]
+position = Vector2(1600, 230)
+script = ExtResource("4_goal")

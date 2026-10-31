@@ -4,6 +4,9 @@ extends Node2D
 ## A swarm of boids. Spawns its boids around its own position and passes the player's force on to them.
 ## The boids are children of this node. A second swarm is simply a second Flock node with other settings.
 
+## Emitted whenever the number of flying, saved or lost boids changes (e.g. to update the HUD).
+signal counts_changed
+
 const BOID_SCENE_PATH: String = "res://flock/boid.tscn"
 
 # number of boids spawned at the start
@@ -21,8 +24,11 @@ var player_force: Vector2 = Vector2.ZERO
 var center: Vector2 = Vector2.ZERO
 # average velocity of all boids, used so boids hitting a wall all turn to the same side
 var average_velocity: Vector2 = Vector2.ZERO
-# all boids that currently belong to this flock
+# all boids that currently belong to this flock and are still flying
 var boids: Array[Boid] = []
+# boids that reached the goal / hit a wall
+var saved_count: int = 0
+var lost_count: int = 0
 # Loaded in _ready() instead of with preload(): boid.gd refers to Flock, so preloading the boid scene
 # here would make Godot load boid.tscn -> boid.gd -> flock.gd -> boid.tscn in a circle ("Parse Error: Busy").
 var boid_scene: PackedScene
@@ -71,6 +77,21 @@ func set_boid_count(value: int) -> void:
 		var boid: Boid = boids.pop_back()
 		remove_child(boid)
 		boid.queue_free()
+	counts_changed.emit()
+
+
+## Called by a boid that hit a wall.
+func on_boid_lost(boid: Boid) -> void:
+	boids.erase(boid)
+	lost_count += 1
+	counts_changed.emit()
+
+
+## Called by a boid that reached the goal.
+func on_boid_saved(boid: Boid) -> void:
+	boids.erase(boid)
+	saved_count += 1
+	counts_changed.emit()
 
 
 ## Instantiates a single boid and places it at a random free spot around the flock.
