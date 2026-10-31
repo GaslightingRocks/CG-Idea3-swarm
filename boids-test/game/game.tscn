@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://flock/default_boid_settings.tres" id="4_settings"]
 [ext_resource type="Script" path="res://player/player_influence.gd" id="5_influence"]
 [ext_resource type="Script" path="res://player/swarm_camera.gd" id="6_camera"]
+[ext_resource type="Script" path="res://ui/influence_indicator.gd" id="7_indicator"]
 
 [node name="GameScene" type="Node2D" unique_id=462784093]
 script = ExtResource("1_onqr8")
@@ -26,3 +27,16 @@ position = Vector2(480, 280)
 zoom = Vector2(2, 2)
 script = ExtResource("6_camera")
 flock = NodePath("../Flock")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="InfluenceIndicator" type="Control" parent="UI" node_paths=PackedStringArray("player_influence")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_indicator")
+player_influence = NodePath("../../PlayerInfluence")

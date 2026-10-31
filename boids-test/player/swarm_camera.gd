@@ -3,6 +3,8 @@ extends Camera2D
 
 ## Follows the center of mass of a flock with a slight delay, so the view doesn't jerk.
 ## The zoom is set with the normal Camera2D "Zoom" property in the inspector.
+## Moves in the physics step like the boids: with physics interpolation (Project Settings > Physics > Common)
+## Godot then smooths both between physics steps, so boids and camera don't jitter against each other.
 
 # flock whose center the camera follows
 @export var flock: Flock
@@ -11,10 +13,11 @@ extends Camera2D
 
 
 func _ready() -> void:
-	global_position = flock.get_center()
+	process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
+	global_position = flock.center
 
 
-func _process(delta: float) -> void:
-	# Moves a fraction of the remaining distance each frame, independent of the frame rate
+func _physics_process(delta: float) -> void:
+	# Moves a fraction of the remaining distance each step, independent of the frame rate
 	var weight: float = 1.0 - exp(-follow_speed * delta)
-	global_position = global_position.lerp(flock.get_center(), weight)
+	global_position = global_position.lerp(flock.center, weight)

@@ -17,6 +17,10 @@ const BOID_SCENE_PATH: String = "res://flock/boid.tscn"
 
 # force the player currently applies, read by every boid in its own physics step
 var player_force: Vector2 = Vector2.ZERO
+# center of mass of all boids, updated once per physics step (the flock's own position if it has no boids)
+var center: Vector2 = Vector2.ZERO
+# average velocity of all boids, used so boids hitting a wall all turn to the same side
+var average_velocity: Vector2 = Vector2.ZERO
 # all boids that currently belong to this flock
 var boids: Array[Boid] = []
 # Loaded in _ready() instead of with preload(): boid.gd refers to Flock, so preloading the boid scene
@@ -28,6 +32,7 @@ func _ready() -> void:
 	if settings == null:
 		settings = BoidSettings.new()
 	boid_scene = load(BOID_SCENE_PATH)
+	center = global_position
 	randomize()
 
 	# Waits until the TileMapLayer has registered its collision shapes, so spawning can avoid the walls
@@ -39,16 +44,22 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	# Godot processes a parent before its children, so this runs before the boids read the force
 	player_force = player_influence.get_force() if player_influence else Vector2.ZERO
+	update_center()
 
 
-## Returns the center of mass of all boids, or the flock's own position if it has none.
-func get_center() -> Vector2:
+## Calculates center of mass and average velocity once, instead of every boid doing it on its own.
+func update_center() -> void:
 	if boids.is_empty():
-		return global_position
-	var center: Vector2 = Vector2.ZERO
+		center = global_position
+		average_velocity = Vector2.ZERO
+		return
+	var position_sum: Vector2 = Vector2.ZERO
+	var velocity_sum: Vector2 = Vector2.ZERO
 	for boid: Boid in boids:
-		center += boid.global_position
-	return center / boids.size()
+		position_sum += boid.global_position
+		velocity_sum += boid.velocity
+	center = position_sum / boids.size()
+	average_velocity = velocity_sum / boids.size()
 
 
 ## Spawns or removes boids until exactly the given number of boids exists.
@@ -73,6 +84,8 @@ func spawn_boid() -> void:
 	# Assigns a random RGB color to the boid (alpha remains 1 for full visibility)
 	boid.modulate = Color(randf(), randf(), randf(), 1)
 	boid.global_position = random_free_position()
+	# Tells the physics interpolation that this was a teleport, not a movement to smooth out
+	boid.reset_physics_interpolation()
 
 
 ## Returns a random position within spawn_radius around the flock that is not inside a wall.

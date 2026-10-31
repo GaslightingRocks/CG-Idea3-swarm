@@ -22,6 +22,9 @@ var flock: Flock
 @onready var vision_shape: CircleShape2D = $Vision/CollisionShape2D.shape
 # wall detection rays, created in code so their length and angle can be tuned in the settings
 var rays: Array[RayCast2D] = []
+# ray settings the rays were last built with, to notice slider changes
+var ray_look_ahead: float = 0.0
+var ray_spread: float = 0.0
 var visible_boids: Array[Boid] = []
 # current velocity vector of boid
 var velocity: Vector2 = Vector2.ZERO
@@ -39,11 +42,12 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	# Applies slider changes from the settings panel
-	vision_shape.radius = settings.vision_radius
-	update_rays()
+	apply_setting_changes()
 
-	var steering: Vector2 = flocking_force() + wall_force() * settings.wall_avoidance_weight + player_force()
+	# The wall push is needed twice: to avoid the wall and to turn the player force along it
+	var wall_push: Vector2 = wall_force()
+	var steering: Vector2 = flocking_force() + flock_pull_force() + player_force(wall_push)
+	steering += wall_push * settings.wall_avoidance_weight
 
 	# Limits how much the velocity can change per frame, which smooths out sudden turns
 	velocity += steering.limit_length(settings.max_steer_force)
@@ -69,8 +73,20 @@ func create_rays() -> void:
 	update_rays()
 
 
+## Applies slider changes from the settings panel.
+## Only touches the physics shapes when a value really changed: resizing the vision circle
+## makes the physics engine recheck all overlaps, doing that every frame for every boid causes heavy stutters.
+func apply_setting_changes() -> void:
+	if vision_shape.radius != settings.vision_radius:
+		vision_shape.radius = settings.vision_radius
+	if ray_look_ahead != settings.wall_look_ahead or ray_spread != settings.wall_ray_spread:
+		update_rays()
+
+
 ## Points the rays fan-shaped to the front: the middle ray is the longest, the outer ones are shorter.
 func update_rays() -> void:
+	ray_look_ahead = settings.wall_look_ahead
+	ray_spread = settings.wall_ray_spread
 	for i in rays.size():
 		# -1 for the leftmost ray, 0 for the middle one, +1 for the rightmost ray
 		var side: float = lerpf(-1.0, 1.0, float(i) / (rays.size() - 1))
@@ -127,12 +143,38 @@ func wall_force() -> Vector2:
 	return force * settings.speed
 
 
+## Gently pulls the boid toward the center of its whole flock, so separated groups find back together.
+func flock_pull_force() -> Vector2:
+	if flock == null:
+		return Vector2.ZERO
+	return steer_towards(flock.center - global_position) * settings.flock_pull_weight
+
+
 ## Steers toward where the player points the mouse, stronger the further the mouse is from the screen center.
-func player_force() -> Vector2:
+## Near a wall the force is turned along the wall instead of pushing the boid into it.
+func player_force(wall_push: Vector2) -> Vector2:
 	if flock == null:
 		return Vector2.ZERO
 	var force: Vector2 = flock.player_force
+	if force.is_zero_approx():
+		return Vector2.ZERO
+	if not wall_push.is_zero_approx():
+		var normal: Vector2 = wall_push.normalized()
+		if force.dot(normal) < 0.0:
+			force = along_wall(force, normal)
 	return steer_towards(force) * force.length() * settings.player_influence_weight
+
+
+## Turns a direction that points into a wall so it runs along the wall instead, keeping its length.
+## If it points almost straight into the wall, the boid turns to the side the whole flock is flying to.
+## That way all boids of a swarm slide the same way and the swarm doesn't split up at the wall.
+func along_wall(direction: Vector2, normal: Vector2) -> Vector2:
+	var tangent: Vector2 = normal.orthogonal()
+	var reference: Vector2 = direction.slide(normal)
+	if reference.length() < direction.length() * 0.3 and flock != null:
+		reference = flock.average_velocity
+	var side: float = 1.0 if reference.dot(tangent) >= 0.0 else -1.0
+	return tangent * side * direction.length()
 
 
 ## Drops neighbors that were deleted (e.g. when the boid count is lowered) without leaving the vision area.
@@ -179,10 +221,12 @@ func clip_against_walls(motion: Vector2, turn_velocity: bool) -> Vector2:
 		# Removes the part of the motion that points into the wall
 		motion = motion.slide(normal)
 		if turn_velocity:
+			var old_velocity: Vector2 = velocity
 			velocity = velocity.slide(normal)
-			# Flying straight into the wall leaves nothing to slide with, so it turns away instead
-			if velocity.is_zero_approx():
-				velocity = normal * settings.speed
+			# Flying (almost) straight into the wall leaves little to slide with,
+			# so the boid turns along the wall to the side its flock is heading
+			if velocity.length() < settings.speed * 0.3:
+				velocity = along_wall(old_velocity, normal).normalized() * settings.speed
 	return motion
 
 

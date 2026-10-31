@@ -13,6 +13,8 @@ extends Resource
 @export_range(0.0, 5.0, 0.05) var alignment_weight: float = 1.0
 # how strongly the boid moves toward the center of mass of its neighbors
 @export_range(0.0, 5.0, 0.05) var cohesion_weight: float = 1.0
+# gentle, permanent pull toward the center of the whole flock, keeps groups from drifting apart for good
+@export_range(0.0, 2.0, 0.01) var flock_pull_weight: float = 0.15
 # how strongly the boid keeps its personal space free
 @export_range(0.0, 5.0, 0.05) var separation_weight: float = 2.0
 # personal space (in pixels): only neighbors closer than this push the boid away
