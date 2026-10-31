@@ -50,10 +50,14 @@ func scan_other(boid: Boid, _offset: Vector2, distance_squared: float) -> void:
 
 
 ## Hunters don't flee, they steer toward the nearest prey instead.
+## Without prey in sight they fly toward the swarm they hunt (if pursue_weight is above 0).
 func behavior_force() -> Vector2:
-	if nearest_prey == null:
-		return Vector2.ZERO
-	return steer_towards(nearest_prey.global_position - global_position) * settings.chase_weight
+	if nearest_prey != null:
+		return steer_towards(nearest_prey.global_position - global_position) * settings.chase_weight
+	var target: Flock = flock.target_flock if flock else null
+	if target != null and not target.boids.is_empty():
+		return steer_towards(target.center - global_position) * settings.pursue_weight
+	return Vector2.ZERO
 
 
 ## Kills the nearest prey if it touches the hunter. The hunter loses a life and dies when none are left.

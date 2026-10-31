@@ -20,6 +20,8 @@ signal counts_changed
 @export var settings: BoidSettings
 # turns the mouse into a force; leave empty for a flock the player can't control
 @export var player_influence: PlayerInfluence
+# flock this flock hunts (used by hunters to find the player's swarm), leave empty for none
+@export var target_flock: Flock
 
 # force the player currently applies, read by every boid in its own physics step
 var player_force: Vector2 = Vector2.ZERO

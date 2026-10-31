@@ -23,7 +23,7 @@ script = ExtResource("3_flock")
 settings = ExtResource("4_settings")
 player_influence = NodePath("../PlayerInfluence")
 
-[node name="EnemyFlock" type="Node2D" parent="."]
+[node name="EnemyFlock" type="Node2D" parent="." node_paths=PackedStringArray("target_flock")]
 script = ExtResource("3_flock")
 boid_scene_path = "res://flock/hunter.tscn"
 random_colors = false
@@ -31,6 +31,7 @@ boid_color = Color(1, 0.2, 0.2, 1)
 boid_count = 12
 spawn_radius = 70.0
 settings = ExtResource("9_enemy_settings")
+target_flock = NodePath("../Flock")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=253825087 node_paths=PackedStringArray("flock")]
 zoom = Vector2(2, 2)

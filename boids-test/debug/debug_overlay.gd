@@ -15,6 +15,10 @@ const PLAYER_COLOR: Color = Color(1.0, 1.0, 1.0)
 const WALL_COLOR: Color = Color(1.0, 0.6, 0.1)
 const BEHAVIOR_COLOR: Color = Color(1.0, 0.3, 0.8)
 
+# Whether the overlay is on. "static" means the variable belongs to the script instead of a single node,
+# so it survives restarting the round (R reloads the scene and creates a new overlay node).
+static var enabled: bool = false
+
 # flocks whose boids are drawn, set by the game
 var flocks: Array[Flock] = []
 # camera that is zoomed out while the overlay is on
@@ -28,7 +32,6 @@ var info_label: Label
 func _ready() -> void:
 	# Drawn on top of everything else in the world
 	z_index = 100
-	visible = false
 
 	# Text in screen space, so it doesn't move with the camera
 	var layer: CanvasLayer = CanvasLayer.new()
@@ -44,18 +47,25 @@ func _ready() -> void:
 	info_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	info_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 16)
 
+	if camera:
+		normal_zoom = camera.zoom
+	# Turns the overlay back on if it was on before the restart
+	set_enabled(enabled)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	# "toggle_debug" is defined in Project Settings > Input Map (F3 by default)
 	if event.is_action_pressed("toggle_debug"):
-		visible = not visible
-		info_label.visible = visible
-		if camera:
-			if visible:
-				normal_zoom = camera.zoom
-				camera.zoom = debug_zoom
-			else:
-				camera.zoom = normal_zoom
+		set_enabled(not enabled)
+
+
+## Shows or hides the overlay and zooms the camera out or back in.
+func set_enabled(value: bool) -> void:
+	enabled = value
+	visible = value
+	info_label.visible = value
+	if camera:
+		camera.zoom = debug_zoom if value else normal_zoom
 
 
 func _process(_delta: float) -> void:

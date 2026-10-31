@@ -25,6 +25,8 @@ extends Resource
 @export_range(0.0, 10.0, 0.1) var flee_weight: float = 1.5
 # how strongly a hunter chases the nearest prey it can see (only used by hunters)
 @export_range(0.0, 10.0, 0.1) var chase_weight: float = 2.0
+# how strongly a hunter flies toward the player's swarm while it sees no prey, 0 = hunters only roam
+@export_range(0.0, 5.0, 0.05) var pursue_weight: float = 0.5
 # lives of a hunter: every kill costs one, it dies at 0 (only used by hunters, applies to newly spawned ones)
 @export_range(1, 10, 1) var hunter_lives: int = 3
 # how strongly the boid turns away from walls detected by its raycasts
