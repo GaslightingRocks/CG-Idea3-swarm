@@ -34,6 +34,12 @@ var center: Vector2 = Vector2.ZERO
 var average_velocity: Vector2 = Vector2.ZERO
 # sum of the courage of all boids, the currency for special abilities
 var total_courage: float = 0.0
+
+# State of the special abilities, started by PlayerAbilities and read by the boids
+var dodge_time_left: float = 0.0
+var dodge_speed_multiplier: float = 1.0
+var attack_time_left: float = 0.0
+var attack_steer_weight: float = 0.0
 # all boids that currently belong to this flock and are still flying
 var boids: Array[Boid] = []
 # boids that reached the goal / were killed
@@ -59,10 +65,52 @@ func _ready() -> void:
 	set_boid_count(boid_count)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	# Godot processes a parent before its children, so this runs before the boids read the force
 	player_force = player_influence.get_force() if player_influence else Vector2.ZERO
 	update_center()
+	dodge_time_left = maxf(dodge_time_left - delta, 0.0)
+	attack_time_left = maxf(attack_time_left - delta, 0.0)
+
+
+## True while the dodge ability is active: the boids are faster and hunters can't catch them.
+func is_dodging() -> bool:
+	return dodge_time_left > 0.0
+
+
+## True while the attack ability is active: the boids fly at hunters and hurt them on contact.
+func is_attacking() -> bool:
+	return attack_time_left > 0.0
+
+
+## Starts the dodge: every boid turns in the player's direction (or the flock's flight direction)
+## and flies faster for the given time.
+func start_dodge(duration: float, speed_multiplier: float) -> void:
+	dodge_time_left = duration
+	dodge_speed_multiplier = speed_multiplier
+	var direction: Vector2 = player_force if not player_force.is_zero_approx() else average_velocity
+	if direction.is_zero_approx():
+		return
+	for boid: Boid in boids:
+		boid.velocity = direction.normalized() * boid.settings.speed * speed_multiplier
+
+
+## Starts the attack for the given time. steer_weight is how strongly the boids fly at hunters.
+func start_attack(duration: float, steer_weight: float) -> void:
+	attack_time_left = duration
+	attack_steer_weight = steer_weight
+
+
+## Pays the given amount from the flock's courage, taken from all boids in proportion to their courage.
+## Returns false (and pays nothing) if the flock doesn't have enough courage.
+func spend_courage(amount: float) -> bool:
+	if total_courage < amount or total_courage <= 0.0:
+		return false
+	var remaining_factor: float = (total_courage - amount) / total_courage
+	for boid: Boid in boids:
+		boid.courage *= remaining_factor
+	total_courage -= amount
+	return true
 
 
 ## Calculates center of mass, average velocity and total courage once, instead of every boid doing it on its own.

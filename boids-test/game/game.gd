@@ -8,6 +8,7 @@ extends Node2D
 @onready var enemy_flock: Flock = $EnemyFlock
 @onready var camera: SwarmCamera = $Camera2D
 @onready var hud: Hud = $UI/Hud
+@onready var abilities: PlayerAbilities = $PlayerAbilities
 # one flock per StrayZone of the level, created in _ready()
 var stray_flocks: Array[Flock] = []
 
@@ -47,8 +48,9 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Courage changes all the time, so it's updated every frame instead of only on count changes
+	# Courage and running abilities change all the time, so they're updated every frame
 	hud.show_courage(flock.total_courage, flock.boids.size())
+	hud.show_abilities(abilities.get_status_text())
 
 
 func _unhandled_input(event: InputEvent) -> void:

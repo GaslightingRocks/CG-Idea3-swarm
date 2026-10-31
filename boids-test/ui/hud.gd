@@ -7,6 +7,7 @@ extends Control
 @onready var counts_label: Label = $Counts
 @onready var message_label: Label = $Message
 @onready var courage_label: Label = $Courage
+@onready var abilities_label: Label = $Abilities
 
 
 ## Shows how many of the player's boids are still flying, saved and lost,
@@ -24,3 +25,8 @@ func show_message(text: String) -> void:
 ## Shows the summed up courage of the swarm and how much it could have at most (every boid fully brave).
 func show_courage(total: float, maximum: int) -> void:
 	courage_label.text = "Mut: %d / %d" % [roundi(total), maximum]
+
+
+## Shows the ability keys, costs and which ability is running.
+func show_abilities(text: String) -> void:
+	abilities_label.text = text

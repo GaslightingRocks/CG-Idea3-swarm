@@ -50,6 +50,8 @@ var neighbor_position_sum: Vector2 = Vector2.ZERO
 var separation_push: Vector2 = Vector2.ZERO
 var overlap_push: Vector2 = Vector2.ZERO
 var hunter_threat: Vector2 = Vector2.ZERO
+var nearest_hunter: Boid = null
+var nearest_hunter_distance_squared: float = INF
 # player flock a stray wants to join, found in scan_neighbors()
 var join_target: Flock = null
 
@@ -93,8 +95,11 @@ func _physics_process(delta: float) -> void:
 	if velocity.is_zero_approx():
 		velocity = Vector2.RIGHT.rotated(rotation)
 
-	# Enforces constant speed
-	velocity = velocity.normalized() * settings.speed
+	# Enforces constant speed (faster while the flock dodges)
+	var speed: float = settings.speed
+	if flock and flock.is_dodging():
+		speed *= flock.dodge_speed_multiplier
+	velocity = velocity.normalized() * speed
 
 	# Touching a wall costs the boid if lethal_walls is switched on in the settings
 	if settings.lethal_walls and hits_wall_ahead():
@@ -117,15 +122,25 @@ func apply_setting_changes() -> void:
 
 
 ## Courage rises while the boid has at least courage_group_size neighbors of its own flock and sinks otherwise.
-## Brave boids are drawn bigger and brighter, scared ones smaller and darker.
 func update_courage(delta: float) -> void:
 	if neighbor_count >= settings.courage_group_size:
 		courage += settings.courage_gain * delta
 	else:
 		courage -= settings.courage_loss * delta
 	courage = clampf(courage, 0.0, 1.0)
+	update_look()
+
+
+## Brave boids are drawn bigger and brighter, scared ones smaller and darker.
+## While attacking the swarm glows orange, while dodging it's see-through.
+func update_look() -> void:
 	body.scale = Vector2.ONE * lerpf(0.75, 1.25, courage)
-	body.color = Color.WHITE.darkened(0.6 * (1.0 - courage))
+	var tint: Color = Color.WHITE.darkened(0.6 * (1.0 - courage))
+	if flock and flock.is_attacking():
+		tint = tint.lerp(Color(1.0, 0.45, 0.1), 0.7)
+	if flock and flock.is_dodging():
+		tint.a = 0.4
+	body.color = tint
 
 
 ## Goes once over all visible boids and collects everything the steering rules need.
@@ -136,6 +151,8 @@ func scan_neighbors() -> void:
 	separation_push = Vector2.ZERO
 	overlap_push = Vector2.ZERO
 	hunter_threat = Vector2.ZERO
+	nearest_hunter = null
+	nearest_hunter_distance_squared = INF
 	scan_start()
 
 	var separation_radius_squared: float = settings.separation_radius * settings.separation_radius
@@ -186,6 +203,9 @@ func scan_other(boid: Boid, offset: Vector2, distance_squared: float) -> void:
 		if distance_squared > 0.0:
 			# Closer hunters are much scarier
 			hunter_threat += offset / distance_squared
+		if distance_squared < nearest_hunter_distance_squared:
+			nearest_hunter = boid
+			nearest_hunter_distance_squared = distance_squared
 		return
 	# A stray joins as soon as a boid of a player-controlled flock comes within join_radius
 	var is_stray: bool = flock != null and flock.stray_group
@@ -222,6 +242,9 @@ func flocking_force() -> Vector2:
 ## Extra steering that makes this kind of boid special. Normal boids flee from the hunters they can see,
 ## the Hunter class overrides this to chase its prey instead.
 func behavior_force() -> Vector2:
+	# While the flock attacks, the boid flies at the nearest hunter instead of fleeing
+	if flock and flock.is_attacking() and nearest_hunter:
+		return steer_towards(nearest_hunter.global_position - global_position) * flock.attack_steer_weight
 	return steer_towards(hunter_threat) * settings.flee_weight
 
 

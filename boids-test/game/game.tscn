@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://ui/influence_indicator.gd" id="7_indicator"]
 [ext_resource type="Script" path="res://ui/hud.gd" id="8_hud"]
 [ext_resource type="Resource" path="res://flock/enemy_boid_settings.tres" id="9_enemy_settings"]
+[ext_resource type="Script" path="res://player/player_abilities.gd" id="10_abilities"]
 
 [node name="GameScene" type="Node2D" unique_id=462784093]
 script = ExtResource("1_onqr8")
@@ -17,6 +18,10 @@ script = ExtResource("1_onqr8")
 
 [node name="PlayerInfluence" type="Node" parent="."]
 script = ExtResource("5_influence")
+
+[node name="PlayerAbilities" type="Node" parent="." node_paths=PackedStringArray("flock")]
+script = ExtResource("10_abilities")
+flock = NodePath("../Flock")
 
 [node name="Flock" type="Node2D" parent="." node_paths=PackedStringArray("player_influence")]
 script = ExtResource("3_flock")
@@ -34,7 +39,7 @@ settings = ExtResource("9_enemy_settings")
 target_flock = NodePath("../Flock")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=253825087 node_paths=PackedStringArray("flock")]
-zoom = Vector2(2, 2)
+zoom = Vector2(1.25, 1.25)
 script = ExtResource("6_camera")
 flock = NodePath("../Flock")
 
@@ -103,4 +108,20 @@ offset_right = 200.0
 offset_bottom = 56.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+
+[node name="Abilities" type="Label" parent="UI/Hud"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -500.0
+offset_top = -56.0
+offset_right = 500.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1

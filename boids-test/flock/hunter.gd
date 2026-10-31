@@ -65,15 +65,27 @@ func behavior_force() -> Vector2:
 	return Vector2.ZERO
 
 
-## Kills the nearest prey if it touches the hunter. The hunter loses a life and dies when none are left.
+## Handles the nearest prey touching the hunter: normally the prey dies and the hunter loses a life.
+## A dodging swarm can't be caught, an attacking swarm only hurts the hunter.
 func check_contact() -> void:
 	if nearest_prey == null or not is_instance_valid(nearest_prey) or nearest_prey.state != State.FLYING:
 		return
 	if global_position.distance_to(nearest_prey.global_position) > CONTACT_DISTANCE:
 		return
 
-	nearest_prey.die()
+	var prey_flock: Flock = nearest_prey.flock
+	# Dodging boids slip through the hunter's grip
+	if prey_flock and prey_flock.is_dodging():
+		return
+	# Attacking boids survive the contact, only the hunter gets hurt
+	if not (prey_flock and prey_flock.is_attacking()):
+		nearest_prey.die()
 	nearest_prey = null
+	take_hit()
+
+
+## Costs the hunter one life. It dies when none are left, otherwise it can't kill for a moment and gets darker.
+func take_hit() -> void:
 	lives -= 1
 	if lives <= 0:
 		die()
