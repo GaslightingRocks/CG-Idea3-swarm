@@ -1,55 +1,98 @@
 class_name GravityPoint
 extends Node2D
+## Schwarzes Loch: fängt die nächstgelegenen Boids ein und hält sie in einem kleinen Ring
+## um sein Zentrum. Es können nur `max_boids` gleichzeitig festgehalten werden ("Sättigung"),
+## alle anderen fliegen unbeeinflusst vorbei.
+##
+## Geändert gegenüber der ersten Version:
+##  - Keine Area2D mehr. Der Einfangbereich ist jetzt `capture_radius`, die Boids werden
+##    über den Swarm gesucht. Die Area2D + CollisionShape2D unter diesem Node können gelöscht
+##    werden (weniger Physik-Objekte).
+##  - Kein filter()/sort_custom() mit Lambda mehr in jedem Frame (das erzeugt jedes Mal
+##    neue Arrays und Callables). Stattdessen einfache Schleifen.
+##  - Ein Boid, der festgehalten wird, hat is_pulled = true, bis dieser Punkt ihn wieder
+##    freigibt. Das Flag flackert nicht mehr.
 
-@export var max_boids: int = 5        # Maximale Anzahl an fest gebundenen Boids
-@export var pull_strength: float = 200.0 
+## Maximale Anzahl gleichzeitig festgehaltener Boids.
+@export var max_boids: int = 5
+## Reichweite, in der Boids eingefangen werden (px). Entspricht der alten Area2D
+## (Radius 10 * Scale 5 * Scale 1,235 = ~62).
+@export var capture_radius: float = 62.0
+## Radius des innersten Rings, auf dem die gefangenen Boids sitzen (px).
+@export var ring_radius: float = 15.0
+## Jeder weitere Boid sitzt um so viel weiter außen (px), damit sie nicht aufeinander hocken.
+@export var ring_step: float = 2.0
+## Wie stark ein festgehaltener Boid pro Physik-Frame zu seinem Platz gezogen wird (0..1).
+@export_range(0.0, 1.0) var snap_factor: float = 0.1
+## Einfangbereich im Spiel als dünner Kreis anzeigen (zum Einstellen praktisch).
+@export var show_radius: bool = true
 
-@onready var area_2d: Area2D = $Area2D 
+## Aktuell festgehaltene Boids.
+var captured: Array[Boid] = []
 
-var current_pulled_boids: Array[Boid] = []
+var _swarm: Swarm
+var _candidates: Array[Boid] = []   # wiederverwendetes Suchergebnis
 
-func _physics_process(delta: float) -> void:
-	if not area_2d:
-		return
-		
-	# 1. Boids, die nicht mehr im Area2D sind oder ungültig wurden, rauswerfen
-	current_pulled_boids = current_pulled_boids.filter(func(b):
-		return is_instance_valid(b) and area_2d.overlaps_body(b)
-	)
-	
-	# 2. Neue Boids aus dem Umkreis holen, solange wir unter dem Limit (Sättigung) sind
-	var overlapping_bodies = area_2d.get_overlapping_bodies()
-	var available_boids: Array[Boid] = []
-	
-	for body in overlapping_bodies:
-		if body is Boid and not current_pulled_boids.has(body):
-			# Nur Boids einsammeln, die nicht bereits von einem anderen Punkt gehalten werden
-			available_boids.append(body)
-			
-	# Nach Entfernung sortieren (die Nächsten zuerst)
-	available_boids.sort_custom(func(a, b):
-		return global_position.distance_squared_to(a.global_position) < global_position.distance_squared_to(b.global_position)
-	)
-	
-	# Plätze auffüllen bis `max_boids` erreicht ist
-	for boid in available_boids:
-		if current_pulled_boids.size() < max_boids:
-			current_pulled_boids.append(boid)
-		else:
-			break 
-			
-	# 3. Festhalten-Logik: Zwinge die gebundenen Boids direkt zum Zentrum des Schwarzen Lochs
-	for i in range(current_pulled_boids.size()):
-		var boid = current_pulled_boids[i]
-		
-		# Wir sagen dem Boid, dass er im Sog ist (für den Schwarm-Filter)
-		boid.is_pulled = true
-		
-		# Wir verteilen die Boids in einem kleinen Kreis um das Zentrum (damit sie nicht alle exakt aufeinander hocken)
-		var angle = (i / float(current_pulled_boids.size())) * PI * 2.0
-		var offset = Vector2(cos(angle), sin(angle)) * (15.0 + (i * 2.0))
-		var target_pos = global_position + offset
-		
-		# Boid direkt sanft zum Zielpunkt ziehen und Geschwindigkeit dämpfen
-		boid.global_position = boid.global_position.lerp(target_pos, 0.1)
-		boid.velocity = boid.velocity.lerp(Vector2.ZERO, 0.1)
+
+func _ready() -> void:
+	_swarm = get_tree().get_first_node_in_group(Swarm.GROUP) as Swarm
+	if _swarm == null:
+		push_error("GravityPoint: kein Swarm in der Szene gefunden.")
+		set_physics_process(false)
+
+
+func _draw() -> void:
+	if show_radius:
+		draw_arc(Vector2.ZERO, capture_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.25), 1.0)
+
+
+func _physics_process(_delta: float) -> void:
+	_release_boids_out_of_range()
+	if captured.size() < max_boids:
+		_capture_nearest_boids()
+	_hold_captured_boids()
+
+
+## 1. Boids rauswerfen, die ungültig geworden sind (gelöscht) oder zu weit weg sind.
+func _release_boids_out_of_range() -> void:
+	var radius_sq := capture_radius * capture_radius
+	# Rückwärts laufen, damit remove_at() die noch unbesuchten Einträge nicht verschiebt.
+	for i in range(captured.size() - 1, -1, -1):
+		var boid := captured[i]
+		if not is_instance_valid(boid):
+			captured.remove_at(i)
+		elif global_position.distance_squared_to(boid.global_position) > radius_sq:
+			boid.is_pulled = false
+			captured.remove_at(i)
+
+
+## 2. Freie Plätze mit den nächsten, noch freien Boids auffüllen.
+func _capture_nearest_boids() -> void:
+	_swarm.query_radius(global_position, capture_radius, _candidates)
+
+	while captured.size() < max_boids:
+		var nearest: Boid = null
+		var nearest_dist_sq := INF
+		for candidate in _candidates:
+			# is_pulled = wird schon von diesem oder einem anderen GravityPoint gehalten.
+			if candidate.is_pulled:
+				continue
+			var d := global_position.distance_squared_to(candidate.global_position)
+			if d < nearest_dist_sq:
+				nearest_dist_sq = d
+				nearest = candidate
+		if nearest == null:
+			break   # niemand mehr in Reichweite
+		nearest.is_pulled = true
+		captured.append(nearest)
+
+
+## 3. Gefangene Boids sanft auf ihre Plätze im Ring ziehen.
+func _hold_captured_boids() -> void:
+	var total := captured.size()
+	for i in total:
+		var boid := captured[i]
+		var angle := (float(i) / total) * TAU
+		var slot := global_position + Vector2.from_angle(angle) * (ring_radius + i * ring_step)
+		boid.global_position = boid.global_position.lerp(slot, snap_factor)
+		boid.velocity = boid.velocity.lerp(Vector2.ZERO, snap_factor)
