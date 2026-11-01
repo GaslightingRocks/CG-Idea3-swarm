@@ -6,6 +6,8 @@ Teamprojekt im Kurs _Computerspiele & Visual Effects_ (Uni Tübingen, WiSe 26/27
 > **.NET SDK:** 8.x
 > **Renderer:** <Forward+ / Mobile / Compatibility>
 
+> **Aktueller Stand:** Der spielbare Swarm-Prototyp liegt in [`boids-test/`](boids-test/README.md) (reines GDScript, Godot 4.7). Dort stehen Steuerung, Features und was noch fehlt. `Idea3Prototype/` ist bisher ein leeres Projektgerüst.
+
 ---
 
 ## 1. Einmalig pro Rechner: Voraussetzungen
