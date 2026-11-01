@@ -43,7 +43,7 @@ var group_share: float = 0.0
 # State of the special abilities, started by PlayerAbilities and read by the boids
 var dodge_time_left: float = 0.0
 var dodge_speed_multiplier: float = 1.0
-var attack_time_left: float = 0.0
+var attacking: bool = false
 var attack_speed_multiplier: float = 1.0
 var attack_steer_multiplier: float = 1.0
 var attack_steer_weight: float = 0.0
@@ -51,6 +51,9 @@ var attack_range: float = 0.0
 # flock whose boids are attacked, and the one of them the whole swarm currently charges at
 var attack_victims: Flock = null
 var attack_target: Boid = null
+# after an attack the boids are pulled together much stronger for a moment, so the swarm reunites
+var regroup_time_left: float = 0.0
+var regroup_pull_multiplier: float = 1.0
 # all boids that currently belong to this flock and are still flying
 var boids: Array[Boid] = []
 # boids that reached the goal / were killed
@@ -82,7 +85,7 @@ func _physics_process(delta: float) -> void:
 	update_center()
 	fill_courage_pool(delta)
 	dodge_time_left = maxf(dodge_time_left - delta, 0.0)
-	attack_time_left = maxf(attack_time_left - delta, 0.0)
+	regroup_time_left = maxf(regroup_time_left - delta, 0.0)
 	if is_attacking():
 		attack_target = find_attack_target()
 
@@ -94,7 +97,12 @@ func is_dodging() -> bool:
 
 ## True while the attack ability is active: the boids fly at hunters and hurt them on contact.
 func is_attacking() -> bool:
-	return attack_time_left > 0.0
+	return attacking
+
+
+## True for a short time after an attack, while the boids are pulled back together.
+func is_regrouping() -> bool:
+	return regroup_time_left > 0.0
 
 
 ## Starts the dodge: every boid turns in the player's direction (or the flock's flight direction)
@@ -110,10 +118,11 @@ func start_dodge(duration: float, speed_multiplier: float) -> void:
 
 
 ## Starts the attack: the whole swarm lunges at the nearest boid of the victims flock (within range),
-## flies faster and turns sharper for the given time.
-func start_attack(duration: float, victims: Flock, range_px: float, speed_multiplier: float,
+## flies faster and turns sharper until stop_attack() is called.
+func start_attack(victims: Flock, range_px: float, speed_multiplier: float,
 		steer_multiplier: float, steer_weight: float) -> void:
-	attack_time_left = duration
+	attacking = true
+	regroup_time_left = 0.0
 	attack_victims = victims
 	attack_range = range_px
 	attack_speed_multiplier = speed_multiplier
@@ -127,6 +136,15 @@ func start_attack(duration: float, victims: Flock, range_px: float, speed_multip
 		var direction: Vector2 = lunge_point - boid.global_position
 		if not direction.is_zero_approx():
 			boid.velocity = direction.normalized() * boid.settings.speed * speed_multiplier
+
+
+## Ends the attack at once, the player has control again. For regroup_duration seconds the boids are pulled
+## toward the swarm's center pull_multiplier times as strong as usual, so the scattered swarm reunites.
+func stop_attack(regroup_duration: float, pull_multiplier: float) -> void:
+	attacking = false
+	attack_target = null
+	regroup_time_left = regroup_duration
+	regroup_pull_multiplier = pull_multiplier
 
 
 ## Returns the victim closest to the swarm's center within attack_range, or null.

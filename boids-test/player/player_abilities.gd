@@ -4,10 +4,11 @@ extends Node
 ## The swarm's two special abilities. Both are paid from the flock's courage pool (see the HUD).
 ##
 ## Dodge ("ability_dodge", Space): the whole swarm dashes in the mouse direction at higher speed,
-##     hunters can't catch any boid while it lasts.
-## Attack ("ability_attack", left mouse button): the whole swarm lunges at the nearest hunter, flies faster
-##     and turns much sharper. Every boid touching a hunter throws it back and costs it a life
-##     instead of dying itself, and the camera shakes on every hit.
+##     hunters can't catch any boid while it lasts. Costs dodge_cost once.
+## Attack ("ability_attack", hold the left mouse button): the whole swarm lunges at the nearest hunter,
+##     flies faster and turns much sharper. Every boid touching a hunter throws it back and costs it a life
+##     instead of dying itself, and the camera shakes on every hit. Costs courage every second while held;
+##     releasing the button (or running out of courage) ends it at once and the swarm regroups.
 
 # flock that uses the abilities
 @export var flock: Flock
@@ -21,9 +22,10 @@ extends Node
 @export var dodge_speed_multiplier: float = 2.0
 
 @export_group("Attack")
-@export var attack_cost: float = 25.0
-# seconds the attack lasts
-@export var attack_duration: float = 3.0
+# courage needed to start the attack at all
+@export var attack_start_cost: float = 5.0
+# courage paid per second while the button is held
+@export var attack_cost_per_second: float = 12.0
 # how far (in pixels) from the swarm's center a hunter may be to become the target
 @export var attack_range: float = 500.0
 @export var attack_speed_multiplier: float = 1.7
@@ -32,6 +34,12 @@ extends Node
 # how strongly the boids fly at their target during the attack
 @export var attack_steer_weight: float = 4.0
 
+@export_group("Regroup after attack")
+# seconds the swarm is pulled together after the attack ends
+@export var regroup_duration: float = 1.5
+# flock_pull_weight is multiplied by this while regrouping
+@export var regroup_pull_multiplier: float = 6.0
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Both actions are defined in Project Settings > Input Map
@@ -39,6 +47,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		try_dodge()
 	elif event.is_action_pressed("ability_attack"):
 		try_attack()
+
+
+func _physics_process(delta: float) -> void:
+	if not flock.is_attacking():
+		return
+	# Ends the attack as soon as the button is released or the courage runs out.
+	# Checked every step (instead of waiting for a release event) so it also ends if the release
+	# happened over the settings panel, which swallows the event.
+	if not Input.is_action_pressed("ability_attack") or not flock.spend_courage(attack_cost_per_second * delta):
+		flock.stop_attack(regroup_duration, regroup_pull_multiplier)
 
 
 ## Starts the dodge if it isn't running already and the swarm has enough courage.
@@ -50,14 +68,13 @@ func try_dodge() -> void:
 
 ## Starts the attack if it isn't running already and the swarm has enough courage.
 func try_attack() -> void:
-	if flock.is_attacking() or not flock.spend_courage(attack_cost):
+	if flock.is_attacking() or not flock.spend_courage(attack_start_cost):
 		return
-	flock.start_attack(attack_duration, enemy_flock, attack_range, attack_speed_multiplier,
-			attack_steer_multiplier, attack_steer_weight)
+	flock.start_attack(enemy_flock, attack_range, attack_speed_multiplier, attack_steer_multiplier, attack_steer_weight)
 
 
 ## One line for the HUD: the keys, what each ability costs, and which one is running right now.
 func get_status_text() -> String:
 	var dodge: String = "AKTIV" if flock.is_dodging() else "%d Mut" % roundi(dodge_cost)
-	var attack: String = "AKTIV" if flock.is_attacking() else "%d Mut" % roundi(attack_cost)
-	return "[Leertaste] Ausweichen: %s        [Linksklick] Angriff: %s" % [dodge, attack]
+	var attack: String = "AKTIV" if flock.is_attacking() else "%d Mut/s" % roundi(attack_cost_per_second)
+	return "[Leertaste] Ausweichen: %s        [Linksklick halten] Angriff: %s" % [dodge, attack]

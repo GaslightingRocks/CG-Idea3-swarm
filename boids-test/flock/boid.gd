@@ -264,7 +264,11 @@ func behavior_force() -> Vector2:
 func flock_pull_force() -> Vector2:
 	if flock == null:
 		return Vector2.ZERO
-	return steer_towards(flock.center - global_position) * settings.flock_pull_weight
+	var weight: float = settings.flock_pull_weight
+	# Right after an attack the swarm is pulled together much stronger, so it reunites quickly
+	if flock.is_regrouping():
+		weight *= flock.regroup_pull_multiplier
+	return steer_towards(flock.center - global_position) * weight
 
 
 ## Steers toward where the player points the mouse, stronger the further the mouse is from the screen center.
