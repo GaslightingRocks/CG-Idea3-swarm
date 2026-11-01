@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://csk8hat06mo05"]
+
+[ext_resource type="Script" uid="uid://bpexo50nq6paa" path="res://script/boid.gd" id="1_rwlh6"]
+[ext_resource type="Texture2D" uid="uid://cw0mmi3qol6m0" path="res://assets/icon.svg" id="1_xur1n"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
+radius = 50.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_h5bl7"]
+
+[node name="Boid" type="CharacterBody2D" unique_id=738178479]
+collision_mask = 6
+script = ExtResource("1_rwlh6")
+separation_weight = 30.0
+alignment_weight = 2.0
+crowd_distance = 60.0
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=439306500]
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("1_xur1n")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1946927939]
+shape = SubResource("CircleShape2D_ig7tw")
+
+[node name="Area2D(Vision)" type="Area2D" parent="." unique_id=1336454543]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D(Vision)" unique_id=2038759569]
+scale = Vector2(4, 4)
+shape = SubResource("CircleShape2D_h5bl7")
+
+[node name="RayFolder" type="Node2D" parent="." unique_id=658270086]
+
+[node name="RayCast2D" type="RayCast2D" parent="RayFolder" unique_id=1024832091]
