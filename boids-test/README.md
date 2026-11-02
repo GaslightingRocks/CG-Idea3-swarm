@@ -1,110 +1,110 @@
-# Swarm-Prototyp „Boids mit Individuen“
+# Swarm Prototype "Boids as Individuals"
 
-Spielbarer Prototyp für das Spielgefühl unserer Idee: Der Spieler lenkt einen Boid-Schwarm per Maus durch eine Höhle, schützt ihn vor Jägern und bringt möglichst viele Boids ins Ziel. Jeder Boid ist ein eigenes Objekt mit eigenen Werten (Mut, Zustand, Schwarm-Zugehörigkeit), keine anonyme Masse.
+A playable prototype that proves the game feel of our idea: the player steers a swarm of boids through a cave with the mouse, protects it from hunters and tries to bring as many boids as possible to the goal. Every boid is an object of its own with its own values (courage, state, which swarm it belongs to), not an anonymous mass.
 
-Grafik, Sound, Menüs und Animationen sind bewusst minimal (Dreiecke, Polygone, Labels).
+Graphics, sound, menus and animations are deliberately minimal (triangles, polygons, labels).
 
-## Starten
+## Running it
 
-- **Godot 4.7** (Standard- oder .NET-Version, der Prototyp ist reines **GDScript**, kein C#)
-- In Godot `boids-test/project.godot` importieren, mit **F5** starten (Hauptszene `game/game.tscn`)
-- Vorher `git lfs pull`, sonst fehlen die Bilder in `assets/`
+- **Godot 4.7** (standard or .NET version, the prototype is pure **GDScript**, no C#)
+- Import `boids-test/project.godot` in Godot and press **F5** (main scene `game/game.tscn`)
+- Run `git lfs pull` first, otherwise the images in `assets/` are missing
 
-## Steuerung
+## Controls
 
-| Eingabe | Wirkung |
+| Input | Effect |
 |---|---|
-| **Maus** | Richtung von der Bildschirmmitte zur Maus = Richtung, in die der Schwarm gezogen wird (Maus auf der Mitte = Schwarm fliegt frei) |
-| **Mausrad** | Stärke der Kraft in 10-%-Schritten (0–100 %, Start 60 %) |
-| **Leertaste** | Fähigkeit *Ausweichen* (kostet Mut) |
-| **Linke Maustaste halten** | Fähigkeit *Angriff* (kostet Mut pro Sekunde, endet beim Loslassen) |
-| **R** | Runde neu starten |
-| **H** | Slider-Panels für alle Tuning-Werte ein-/ausblenden |
-| **F3** | Debug-Overlay ein/aus (bleibt nach R an) |
+| **Mouse** | The direction from the screen center to the mouse is the direction the swarm is pulled in (mouse on the center = the swarm flies freely) |
+| **Mouse wheel** | Strength of the pull in 10 % steps (0–100 %, starts at 60 %) |
+| **Space** | *Dodge* ability (costs courage) |
+| **Hold left mouse button** | *Attack* ability (costs courage per second, ends when released) |
+| **R** | Restart the round |
+| **H** | Show/hide the slider panels for all tuning values |
+| **F3** | Debug overlay on/off (stays on after R) |
 
-Alle Tasten sind als Input-Actions unter *Projekt → Projekteinstellungen → Eingabe-Zuordnung* hinterlegt.
+All keys are input actions under *Project → Project Settings → Input Map*.
 
 ## Features
 
-### Schwarm
-- Klassische Boids: **Alignment, Cohesion, Separation** innerhalb des eigenen Schwarms, plus ein dezenter Dauer-Zug zum Schwerpunkt, damit getrennte Gruppen zurückfinden
-- Steering-Modell: Alle Kräfte werden addiert, pro Physik-Schritt begrenzt (`max_steer_force`) und auf konstante Geschwindigkeit normiert, dadurch weiche Kurven
-- **Keine Überlappung:** Boids eines Schwarms schieben sich gegenseitig auseinander (runde Hitbox, Radius 5 px)
-- **Wände:** Strahlenfächer in Flugrichtung weicht früh aus, zusätzlich verhindert eine harte Kollision das Durchfliegen. An Wänden gleitet der ganze Schwarm zur selben Seite, damit er nicht zerbricht. Wände sind standardmäßig **nicht tödlich** (`lethal_walls` in den Settings schaltet das um)
+### Swarm
+- Classic boids: **alignment, cohesion, separation** within the own swarm, plus a gentle constant pull toward the swarm's center so separated groups find back together
+- Steering model: all forces are added up, limited per physics step (`max_steer_force`) and normalized to a constant speed, which gives smooth turns
+- **No overlapping:** boids of a swarm push each other apart (round hitbox, radius 5 px)
+- **Walls:** a fan of rays in flight direction makes boids turn away early, a hard collision on top prevents flying through. At walls the whole swarm slides to the same side, so it doesn't break apart. Walls are **not lethal** by default (`lethal_walls` in the settings switches that)
 
 ### Level
-- Höhle aus **geglätteten Polygonen** (`LevelWall`): Kollision wird aus dem sichtbaren Polygon erzeugt, Punkte lassen sich direkt im Editor verschieben
-- **Startzone** (grün), **Zielzone** (gelb), **Gegnerzone** (rot), **Streunerzonen** (blau), alle auch im Editor sichtbar und per Verschieben/`radius` anpassbar
-- Kamera folgt dem Schwerpunkt des Schwarms (Zoom 1,25)
+- Cave made of **smoothed polygons** (`LevelWall`): the collision is built from the visible polygon, points can be moved directly in the editor
+- **Start zone** (green), **goal zone** (yellow), **hunter zone** (red), **stray zones** (blue), all visible in the editor and adjustable by moving them or changing `radius`
+- The camera follows the swarm's center of mass (zoom 1.25)
 
-### Jäger (zweiter Schwarm mit eigenem Verhalten)
-- 12 rote, größere Jäger (`Hunter` erweitert `Boid`) jagen den nächsten sichtbaren Boid
-- Sehen sie keine Beute, steuern sie auf den Schwarm des Spielers zu (`pursue_weight`, 0 = nur herumstreifen)
-- Kontakt: Beute-Boid stirbt, Jäger verliert ein Leben (`hunter_lives`, Standard 3) und wird dunkler, danach kurze Pause
-- Normale Boids fliehen vor sichtbaren Jägern (`flee_weight`)
+### Hunters (second swarm with its own behavior)
+- 12 red, bigger hunters (`Hunter` extends `Boid`) chase the nearest boid they can see
+- Without prey in sight they head for the player's swarm (`pursue_weight`, 0 = they only roam)
+- Contact: the prey boid dies, the hunter loses a life (`hunter_lives`, default 3) and gets darker, then pauses briefly
+- Normal boids flee from hunters they can see (`flee_weight`)
 
-### Streuner einsammeln
-- Graue, langsamere Boid-Gruppen kreisen um ihre Streunerzone
-- Kommt der Schwarm nah genug (`join_radius`), schließen sie sich an, bekommen eine Farbe und folgen ab dann dem Spieler
-- Streuner können ebenfalls gejagt werden
+### Collecting strays
+- Gray, slower groups of boids circle around their stray zone
+- When the swarm comes close enough (`join_radius`) they join it, get a color and follow the player from then on
+- Strays can be hunted too
 
-### Mut
-- **Mut pro Boid** (0–1): steigt, solange der Boid in einer Gruppe fliegt (sieht mindestens `courage_group_percent` aller Boids seines Schwarms), sinkt, wenn er allein ist
-  - Mutige Boids sind **größer und heller**, ängstliche **kleiner und dunkler**
-  - Ängstliche Boids folgen der Maus schwächer (`courage_min_follow`) und halten mehr Abstand zu Wänden (`courage_wall_caution`)
-- **Mut-Vorrat** (Float, oben in der Mitte): die Währung für Fähigkeiten. Füllt sich langsam (`courage_fill_rate`), aber nur, solange mindestens `courage_min_group_share` der Boids in Gruppen fliegen. Sonst zeigt das HUD „(Schwarm zu verstreut)“. Das Spiel belohnt also, den Schwarm zusammenzuhalten
+### Courage
+- **Courage per boid** (0–1): rises while the boid flies in a group (it sees at least `courage_group_percent` of all boids of its swarm), sinks when it's alone
+  - Brave boids are **bigger and brighter**, scared ones **smaller and darker**
+  - Scared boids follow the mouse less (`courage_min_follow`) and keep more distance to walls (`courage_wall_caution`)
+- **Courage pool** (float, top center): the currency for abilities. It fills slowly (`courage_fill_rate`), but only while at least `courage_min_group_share` of the boids fly in groups. Otherwise the HUD shows "(swarm too scattered)". So the game rewards keeping the swarm together
 
-### Fähigkeiten (kosten Mut)
-- **Ausweichen** (Leertaste, 10 Mut): Der ganze Schwarm sprintet 0,6 s mit doppeltem Tempo in Mausrichtung, Jäger können in der Zeit niemanden erwischen. Boids werden halb durchsichtig
-- **Angriff** (Linksklick halten, 5 Mut + 12 Mut/s): Der Schwarm stößt geschlossen auf den nächsten Jäger vor, fliegt 1,7× schneller und lenkt 3× schärfer. Jeder Kontakt kostet den Jäger ein Leben und schleudert ihn zurück, der Boid überlebt, die Kamera wackelt. Boids leuchten orange. Loslassen beendet den Angriff sofort, danach zieht sich der Schwarm 1,5 s lang stark zusammen
+### Abilities (cost courage)
+- **Dodge** (Space, 10 courage): the whole swarm dashes in the mouse direction at double speed for 0.6 s, hunters can't catch anyone during that time. Boids turn see-through
+- **Attack** (hold left click, 5 courage + 12 courage/s): the swarm charges the nearest hunter as one, flies 1.7× faster and steers 3× sharper. Every contact costs the hunter a life and throws it back, the boid survives, the camera shakes. Boids glow orange. Releasing the button ends the attack at once, then the swarm is pulled together strongly for 1.5 s
 
-### HUD und Runde
-- Oben rechts: unterwegs / gerettet / verloren / Jäger / Streuner
-- Oben Mitte: Mut-Vorrat, Mitte: Kraft-Anzeige (Ring = Stärke, Pfeil = Richtung), unten: Fähigkeiten mit Kosten
-- Runde endet, wenn kein Boid mehr unterwegs ist: „Runde vorbei: X von Y gerettet“
+### HUD and round
+- Top right: flying / saved / lost / hunters / strays
+- Top center: courage pool, center: strength indicator (ring = strength, arrow = direction), bottom: abilities with their costs
+- The round ends when no boid is flying anymore: "Round over: X of Y saved"
 
-### Tuning und Debug
-- **Alle Verhaltenswerte** stehen in `BoidSettings`-Resources: `flock/default_boid_settings.tres` (Spieler), `flock/enemy_boid_settings.tres` (Jäger). Im Inspector dauerhaft ändern, mit **H** live per Slider (live-Änderungen werden nicht gespeichert, „Reset“ stellt den Rundenstart wieder her)
-- Fähigkeiten: Inspector von `PlayerAbilities`, Steuerung: `PlayerInfluence`, Kamera: `Camera2D`
-- **F3-Overlay:** Sichtradien, Geschwindigkeit (grün), Flocking (blau), Spielerkraft (weiß), Wände (orange), Fliehen/Jagen (pink), Schwerpunkte (gelb), FPS, Physik-/Prozesszeit und Zähler pro Schwarm. Die Kamera zoomt dabei auf den ganzen Level heraus
+### Tuning and debugging
+- **All behavior values** are in `BoidSettings` resources: `flock/default_boid_settings.tres` (player), `flock/enemy_boid_settings.tres` (hunters). Change them permanently in the inspector, or live with sliders via **H** (live changes are not saved, "Reset" restores the values from the start of the round)
+- Abilities: inspector of `PlayerAbilities`, steering: `PlayerInfluence`, camera: `Camera2D`
+- **F3 overlay:** vision radii, velocity (green), flocking (blue), player force (white), walls (orange), fleeing/chasing (pink), centers of mass (yellow), FPS, physics/process time and counters per swarm. The camera zooms out to the whole level
 
-## Projektstruktur
+## Project structure
 
 ```
 boids-test/
-├── assets/          Bilder (Git LFS): Tileset nur noch für level_1, Icon
-├── game/            game.tscn (Hauptszene) + game.gd: Level, Schwärme, Kamera, UI, Rundenlogik
-├── flock/           boid.gd/.tscn (Individuum), hunter.gd/.tscn (Jäger), flock.gd (Schwarm),
-│                    boid_settings.gd + .tres (Tuning-Werte)
-├── levels/          level_2.tscn (gespieltes Level), level_1.tscn (alt, Tiles), level.gd,
+├── assets/          Images (Git LFS): tileset only used by level_1 now, icon
+├── game/            game.tscn (main scene) + game.gd: level, swarms, camera, UI, round logic
+├── flock/           boid.gd/.tscn (individual), hunter.gd/.tscn (hunter), flock.gd (swarm),
+│                    boid_settings.gd + .tres (tuning values)
+├── levels/          level_2.tscn (the played level), level_1.tscn (old, tiles), level.gd,
 │                    level_wall.gd, start_zone.gd, goal_zone.gd, stray_zone.gd
-├── player/          player_influence.gd (Maus → Kraft), player_abilities.gd, swarm_camera.gd
+├── player/          player_influence.gd (mouse → force), player_abilities.gd, swarm_camera.gd
 ├── ui/              hud.gd, influence_indicator.gd, boid_settings_panel.gd
 └── debug/           debug_overlay.gd
 ```
 
-Architektur in Kürze:
-- `Boid` hat pro Individuum: Geschwindigkeit, Zustand (fliegt / gerettet / verloren), Mut, Schwarm-Zugehörigkeit. Alle Nachbarn werden pro Physik-Schritt in **einem** Durchlauf ausgewertet (Performance)
-- `Flock` ist ein wiederverwendbarer Node: eigene Boid-Szene, Farbe, Settings. Spieler-Schwarm, Jäger und jede Streunergruppe sind je ein Flock
-- Neue Boid-Typen: Skript von `Boid` ableiten und `scan_other()` / `behavior_force()` überschreiben (siehe `hunter.gd`)
-- Neues Level: `level_2.tscn` duplizieren, Polygone und Zonen bearbeiten, in `game.tscn` als `Level` einsetzen
+Architecture in short:
+- Each `Boid` has: velocity, state (flying / saved / lost), courage, the swarm it belongs to. All neighbors are evaluated in **one** pass per physics step (performance)
+- `Flock` is a reusable node: its own boid scene, color and settings. The player's swarm, the hunters and every stray group are one flock each
+- New boid types: extend the `Boid` script and override `scan_other()` / `behavior_force()` (see `hunter.gd`)
+- New level: duplicate `level_2.tscn`, edit the polygons and zones, use it as `Level` in `game.tscn`
 
-## Was noch fehlt / bekannte Baustellen
+## What's still missing / known issues
 
-**Inhalt und Spielablauf**
-- Nur **ein spielbares Level**. `level_1.tscn` ist noch aus Pixel-Tiles und hat keine Zonen, kein Level-Wechsel, kein Menü
-- Kein Ziel über „X von Y gerettet“ hinaus (keine Wertung, kein Zeitlimit, kein Fortschritt)
-- Kein Bezug zum Theme **„Fractured Gravity“**: Die Spielerkraft ist bisher eine einfache Zugrichtung, keine Gravitation mit Brüchen, Zonen oder Ähnlichem
-- Mut-Kosten, Fähigkeiten und Jäger sind nur grob ausbalanciert
+**Content and gameplay**
+- Only **one playable level**. `level_1.tscn` is still made of pixel tiles and has no zones, there's no level switching and no menu
+- No goal beyond "X of Y saved" (no score, no time limit, no progression)
+- No connection to the theme **"Fractured Gravity"** yet: the player's force is a simple pull in one direction, no gravity with fractures, zones or the like
+- Courage costs, abilities and hunters are only roughly balanced
 
-**Technik**
-- Performance nicht systematisch gemessen. Bei 100+ Boids im dichten Schwarm kann es noch ruckeln, F3 zeigt FPS und Physikzeit
-- Einige Werte sind noch Konstanten im Code statt im Inspector: Rückstoß der Jäger, Pause nach Treffer, Stärke des Kamera-Wackelns, Anzahl der Wand-Strahlen, Hitbox-Radius
-- Slider-Änderungen gelten nur bis zum Neustart, gute Werte müssen von Hand in die `.tres` übernommen werden
-- Live-Änderung von `hunter_lives` wirkt erst auf neu gespawnte Jäger, Streuner bekommen beim Rundenstart eine Kopie der Spieler-Settings
-- Kamera hat keine Begrenzung auf den Level-Rand
-- Repo-Aufbau: Der Prototyp liegt in `boids-test/`, das leere C#-Projekt `Idea3Prototype/` wird nicht genutzt. Die Root-README beschreibt noch das .NET-/C#-Setup. Hier muss das Team entscheiden, wo es weitergeht
+**Technical**
+- Performance hasn't been measured systematically. With 100+ boids in a dense swarm it may still stutter, F3 shows FPS and physics time
+- Some values are still constants in the code instead of inspector values: hunter knockback, pause after a hit, camera shake strength, number of wall rays, hitbox radius
+- Slider changes only last until the restart, good values have to be copied into the `.tres` files by hand
+- Changing `hunter_lives` live only affects newly spawned hunters, strays get a copy of the player's settings at the start of the round
+- The camera isn't limited to the level bounds
+- Repo layout: the prototype lives in `boids-test/`, the empty C# project `Idea3Prototype/` isn't used. The root README still describes the .NET/C# setup. The team has to decide where to continue
 
-**Optik und Feedback**
-- Keine Partikel, Sounds oder Animationen (z. B. beim Tod eines Boids, bei Treffern, beim Einsammeln)
-- Unbenutztes Asset `assets/triangle-png-28.png` (Boids sind jetzt Polygone)
+**Visuals and feedback**
+- No particles, sounds or animations (e.g. when a boid dies, on hits, when collecting strays)
+- Unused asset `assets/triangle-png-28.png` (boids are polygons now)
