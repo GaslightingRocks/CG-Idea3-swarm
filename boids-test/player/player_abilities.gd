@@ -75,6 +75,6 @@ func try_attack() -> void:
 
 ## One line for the HUD: the keys, what each ability costs, and which one is running right now.
 func get_status_text() -> String:
-	var dodge: String = "AKTIV" if flock.is_dodging() else "%d Mut" % roundi(dodge_cost)
-	var attack: String = "AKTIV" if flock.is_attacking() else "%d Mut/s" % roundi(attack_cost_per_second)
-	return "[Leertaste] Ausweichen: %s        [Linksklick halten] Angriff: %s" % [dodge, attack]
+	var dodge: String = "ACTIVE" if flock.is_dodging() else "%d courage" % roundi(dodge_cost)
+	var attack: String = "ACTIVE" if flock.is_attacking() else "%d courage/s" % roundi(attack_cost_per_second)
+	return "[Space] Dodge: %s        [Hold left click] Attack: %s" % [dodge, attack]

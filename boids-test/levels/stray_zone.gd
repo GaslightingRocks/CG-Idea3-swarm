@@ -12,5 +12,5 @@ extends StartZone
 
 func _init() -> void:
 	# Defaults for new stray zones, values saved in the level scene overwrite them
-	label = "STREUNER"
+	label = "STRAYS"
 	color = Color(0.6, 0.7, 1.0, 0.2)

@@ -35,7 +35,7 @@ func _ready() -> void:
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, color)
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 64, Color(color, 0.8), 2.0, true)
-	draw_string(ThemeDB.fallback_font, Vector2(-radius, 6), "ZIEL", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, 18, Color(color, 0.8))
+	draw_string(ThemeDB.fallback_font, Vector2(-radius, 6), "GOAL", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, 18, Color(color, 0.8))
 
 
 ## Saves every boid that enters the goal.

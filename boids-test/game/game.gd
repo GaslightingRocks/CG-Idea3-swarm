@@ -108,6 +108,6 @@ func update_hud() -> void:
 	hud.show_counts(flock.boids.size(), saved, lost, enemy_flock.boids.size(), strays_left)
 
 	if flock.boids.is_empty() and saved + lost > 0:
-		hud.show_message("Runde vorbei: %d von %d gerettet\nR: Neustart" % [saved, saved + lost])
+		hud.show_message("Round over: %d of %d saved\nR: Restart" % [saved, saved + lost])
 	else:
 		hud.show_message("")

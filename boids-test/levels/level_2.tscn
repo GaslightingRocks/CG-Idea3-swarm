@@ -50,18 +50,18 @@ position = Vector2(1664, 1152)
 script = ExtResource("3_start")
 radius = 100.0
 color = Color(1, 0.25, 0.25, 0.25)
-label = "GEGNER"
+label = "HUNTERS"
 
 [node name="StrayZone1" type="Node2D" parent="."]
 position = Vector2(900, 1580)
 script = ExtResource("5_stray")
 radius = 70.0
-label = "STREUNER"
+label = "STRAYS"
 color = Color(0.6, 0.7, 1, 0.2)
 
 [node name="StrayZone2" type="Node2D" parent="."]
 position = Vector2(2140, 1500)
 script = ExtResource("5_stray")
 radius = 70.0
-label = "STREUNER"
+label = "STRAYS"
 color = Color(0.6, 0.7, 1, 0.2)

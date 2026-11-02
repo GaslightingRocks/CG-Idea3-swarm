@@ -14,7 +14,7 @@ extends Node2D
 	set(value):
 		color = value
 		queue_redraw()
-# text shown in the circle, e.g. "GEGNER" for the zone the hunters start in
+# text shown in the circle, e.g. "HUNTERS" for the zone the hunters start in
 @export var label: String = "START":
 	set(value):
 		label = value
