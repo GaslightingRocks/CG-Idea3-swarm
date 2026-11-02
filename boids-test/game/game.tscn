@@ -1,0 +1,129 @@
+[gd_scene format=3 uid="uid://bj5bau708go34"]
+
+[ext_resource type="Script" uid="uid://4o3jhojn6hbq" path="res://game/game.gd" id="1_onqr8"]
+[ext_resource type="PackedScene" uid="uid://det1yhaw44ewy" path="res://levels/level_2.tscn" id="2_ycayy"]
+[ext_resource type="Script" uid="uid://vde81fnducg1" path="res://flock/flock.gd" id="3_flock"]
+[ext_resource type="Resource" path="res://flock/default_boid_settings.tres" id="4_settings"]
+[ext_resource type="Script" uid="uid://d22l3y4gigd8j" path="res://player/player_influence.gd" id="5_influence"]
+[ext_resource type="Script" uid="uid://y0knigsvcpqw" path="res://player/swarm_camera.gd" id="6_camera"]
+[ext_resource type="Script" uid="uid://pk01f6fxjbq2" path="res://ui/influence_indicator.gd" id="7_indicator"]
+[ext_resource type="Script" uid="uid://bng8jnpfhaodl" path="res://ui/hud.gd" id="8_hud"]
+[ext_resource type="Resource" path="res://flock/enemy_boid_settings.tres" id="9_enemy_settings"]
+[ext_resource type="Script" uid="uid://c0b2ts23yy7nc" path="res://player/player_abilities.gd" id="10_abilities"]
+
+[node name="GameScene" type="Node2D" unique_id=462784093]
+script = ExtResource("1_onqr8")
+
+[node name="Level" parent="." unique_id=2075216894 instance=ExtResource("2_ycayy")]
+
+[node name="PlayerInfluence" type="Node" parent="." unique_id=1140047615]
+script = ExtResource("5_influence")
+
+[node name="PlayerAbilities" type="Node" parent="." unique_id=460260123 node_paths=PackedStringArray("flock", "enemy_flock")]
+script = ExtResource("10_abilities")
+flock = NodePath("../Flock")
+enemy_flock = NodePath("../EnemyFlock")
+
+[node name="Flock" type="Node2D" parent="." unique_id=681052129 node_paths=PackedStringArray("player_influence")]
+script = ExtResource("3_flock")
+boid_count = 30
+settings = ExtResource("4_settings")
+player_influence = NodePath("../PlayerInfluence")
+
+[node name="EnemyFlock" type="Node2D" parent="." unique_id=2124899857 node_paths=PackedStringArray("target_flock")]
+script = ExtResource("3_flock")
+boid_scene_path = "res://flock/hunter.tscn"
+random_colors = false
+boid_color = Color(1, 0.2, 0.2, 1)
+boid_count = 12
+spawn_radius = 70.0
+settings = ExtResource("9_enemy_settings")
+target_flock = NodePath("../Flock")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=253825087 node_paths=PackedStringArray("flock")]
+zoom = Vector2(1.25, 1.25)
+script = ExtResource("6_camera")
+flock = NodePath("../Flock")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1070748831]
+
+[node name="InfluenceIndicator" type="Control" parent="UI" unique_id=1394756118 node_paths=PackedStringArray("player_influence")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_indicator")
+player_influence = NodePath("../../PlayerInfluence")
+
+[node name="Hud" type="Control" parent="UI" unique_id=554164641]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("8_hud")
+
+[node name="Counts" type="Label" parent="UI/Hud" unique_id=1009470756]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 16.0
+offset_right = -24.0
+offset_bottom = 240.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 2
+
+[node name="Message" type="Label" parent="UI/Hud" unique_id=929580094]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -260.0
+offset_right = 500.0
+offset_bottom = -140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Courage" type="Label" parent="UI/Hud" unique_id=1701050762]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 16.0
+offset_right = 200.0
+offset_bottom = 56.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+
+[node name="Abilities" type="Label" parent="UI/Hud" unique_id=1863839198]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -500.0
+offset_top = -56.0
+offset_right = 500.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1

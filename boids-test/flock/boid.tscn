@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://durgnwkqu0wel"]
+
+[ext_resource type="Script" uid="uid://cyd07fjm8wu1u" path="res://flock/boid.gd" id="1_vrn0v"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 5.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_vision"]
+resource_local_to_scene = true
+radius = 60.0
+
+[node name="Boid" type="Area2D" unique_id=426703174 groups=["boid"]]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_vrn0v")
+
+[node name="Body" type="Polygon2D" parent="." unique_id=568854606]
+antialiased = true
+polygon = PackedVector2Array(6, 0, -4, -4, -2.5, 0, -4, 4)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1143057902]
+shape = SubResource("CircleShape2D_body")
+
+[node name="Vision" type="Area2D" parent="." unique_id=115852130]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Vision" unique_id=1444294068]
+shape = SubResource("CircleShape2D_vision")
+
+[connection signal="area_entered" from="Vision" to="." method="_on_vision_area_entered"]
+[connection signal="area_exited" from="Vision" to="." method="_on_vision_area_exited"]

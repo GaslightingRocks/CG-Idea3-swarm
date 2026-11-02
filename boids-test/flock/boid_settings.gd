@@ -1,0 +1,64 @@
+class_name BoidSettings
+extends Resource
+
+## Tuning values shared by all boids. Changing a value at runtime affects every boid using this resource.
+## Every @export_range property automatically gets a slider in the BoidSettingsPanel.
+## The values below are the defaults, a .tres file (e.g. default_boid_settings.tres) can override them.
+
+# constant movement speed (pixels per physics frame)
+@export_range(0.5, 15.0, 0.1) var speed: float = 5.0
+# max change of velocity per physics frame, lower = smoother but wider turns
+@export_range(0.01, 3.0, 0.01) var max_steer_force: float = 0.5
+# how strongly the boid matches the flight direction of its neighbors
+@export_range(0.0, 5.0, 0.05) var alignment_weight: float = 1.0
+# how strongly the boid moves toward the center of mass of its neighbors
+@export_range(0.0, 5.0, 0.05) var cohesion_weight: float = 1.0
+# gentle, permanent pull toward the center of the whole flock, keeps groups from drifting apart for good
+@export_range(0.0, 2.0, 0.01) var flock_pull_weight: float = 0.15
+# how strongly the boid keeps its personal space free
+@export_range(0.0, 5.0, 0.05) var separation_weight: float = 2.0
+# personal space (in pixels): only neighbors closer than this push the boid away
+@export_range(10.0, 100.0, 1.0) var separation_radius: float = 18.0
+# how strongly the boid follows the mouse force of the player
+@export_range(0.0, 10.0, 0.1) var player_influence_weight: float = 2.0
+# how strongly a normal boid flees from hunters it can see
+@export_range(0.0, 10.0, 0.1) var flee_weight: float = 1.5
+# how strongly a hunter chases the nearest prey it can see (only used by hunters)
+@export_range(0.0, 10.0, 0.1) var chase_weight: float = 2.0
+# how strongly a hunter flies toward the player's swarm while it sees no prey, 0 = hunters only roam
+@export_range(0.0, 5.0, 0.05) var pursue_weight: float = 0.5
+# distance (in pixels) at which a stray joins a boid of the player's swarm (only used by strays)
+@export_range(5.0, 200.0, 1.0) var join_radius: float = 40.0
+# lives of a hunter: every kill costs one, it dies at 0 (only used by hunters, applies to newly spawned ones)
+@export_range(1, 10, 1) var hunter_lives: int = 3
+# how strongly the boid turns away from walls detected by its raycasts
+@export_range(0.0, 10.0, 0.1) var wall_avoidance_weight: float = 4.0
+# radius (in pixels) in which a boid sees its neighbors (for alignment and cohesion)
+@export_range(15.0, 300.0, 1.0) var vision_radius: float = 60.0
+# length (in pixels) of the forward ray, the side rays get shorter toward the edges
+@export_range(10.0, 200.0, 1.0) var wall_look_ahead: float = 64.0
+# angle (in degrees) between the forward ray and the outermost side ray
+@export_range(10.0, 90.0, 1.0) var wall_ray_spread: float = 60.0
+# Courage: every boid has its own courage between 0 (scared) and 1 (brave).
+# courage of a newly spawned boid
+@export_range(0.0, 1.0, 0.05) var courage_start: float = 0.5
+# a boid counts as "in a group" when it sees at least this share of all boids of its flock (0.1 = 10 %)
+@export_range(0.01, 0.5, 0.01) var courage_group_percent: float = 0.08
+# courage gained per second while in a group / lost per second while alone
+@export_range(0.0, 2.0, 0.01) var courage_gain: float = 0.15
+@export_range(0.0, 2.0, 0.01) var courage_loss: float = 0.25
+# how strongly a boid with 0 courage follows the player (1 = like a brave one), brave boids always follow fully
+@export_range(0.0, 1.0, 0.05) var courage_min_follow: float = 0.4
+# wall avoidance multiplier for a boid with 0 courage, scared boids keep more distance (brave ones use 1)
+@export_range(1.0, 4.0, 0.1) var courage_wall_caution: float = 1.8
+# Courage pool: the swarm's currency for abilities, a float that slowly fills up.
+# share of the boids that must be "in a group" for the pool to fill at all (0.5 = half of the swarm)
+@export_range(0.0, 1.0, 0.05) var courage_min_group_share: float = 0.5
+# courage added per second when every boid is in a group (fewer boids in groups fill it slower)
+@export_range(0.0, 20.0, 0.1) var courage_fill_rate: float = 3.0
+# most courage the pool can hold
+@export_range(10.0, 500.0, 5.0) var courage_pool_max: float = 100.0
+# if true, a boid touching a wall is lost; if false, it slides along the wall
+@export var lethal_walls: bool = false
+# how fast the rotation follows the velocity (0 = never, 1 = instantly)
+@export_range(0.0, 1.0, 0.01) var rotation_smoothing: float = 0.4

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BoidSettings" format=3]
+
+[ext_resource type="Script" uid="uid://b2nwa76i2b5g3" path="res://flock/boid_settings.gd" id="1_settings"]
+
+[resource]
+script = ExtResource("1_settings")
+speed = 4.2
+cohesion_weight = 0.3
+flock_pull_weight = 0.0
+separation_radius = 30.0
+chase_weight = 2.5
+vision_radius = 160.0
