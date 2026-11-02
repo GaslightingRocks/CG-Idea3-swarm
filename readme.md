@@ -1,179 +1,179 @@
-# <Spielname>
+# <Game name>
 
-Teamprojekt im Kurs _Computerspiele & Visual Effects_ (Uni Tübingen, WiSe 26/27) · Theme: **Fractured Gravity**
+Team project in the course _Computer Games & Visual Effects_ (University of Tübingen, winter term 26/27) · Theme: **Fractured Gravity**
 
 > **Engine:** Godot **4.7.2-stable .NET** (GDScript + C#)
 > **.NET SDK:** 8.x
 > **Renderer:** <Forward+ / Mobile / Compatibility>
 
-> **Aktueller Stand:** Der spielbare Swarm-Prototyp liegt in [`boids-test/`](boids-test/README.md) (reines GDScript, Godot 4.7). Dort stehen Steuerung, Features und was noch fehlt. `Idea3Prototype/` ist bisher ein leeres Projektgerüst.
+> **Current state:** The playable swarm prototype lives in [`boids-test/`](boids-test/README.md) (pure GDScript, Godot 4.7). Controls, features and what's still missing are described there. `Idea3Prototype/` is an empty project skeleton so far.
 
 ---
 
-## 1. Einmalig pro Rechner: Voraussetzungen
+## 1. Once per computer: requirements
 
-### 1.1 Git + Git LFS installieren
+### 1.1 Install Git + Git LFS
 
-| System                | Befehl / Download                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Windows               | [Git for Windows](https://git-scm.com/download/win) installieren (enthält Git LFS und Git Credential Manager) |
-| macOS                 | `brew install git git-lfs`                                                                                    |
-| Linux (Debian/Ubuntu) | `sudo apt install git git-lfs`                                                                                |
+| System                | Command / download                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Windows               | Install [Git for Windows](https://git-scm.com/download/win) (includes Git LFS and Git Credential Manager) |
+| macOS                 | `brew install git git-lfs`                                                                                 |
+| Linux (Debian/Ubuntu) | `sudo apt install git git-lfs`                                                                             |
 
-Danach **einmal** im Terminal:
+Then run this **once** in a terminal:
 
 ```bash
 git lfs install
 ```
 
-Ohne diesen Schritt kommen Bilder, Sounds und Modelle nur als kleine Textdateien an und das Projekt ist kaputt.
+Without this step, images, sounds and models only arrive as small text files and the project is broken.
 
-**Mindestens Git 2.45.2** (prüfen mit `git --version`). Ältere Versionen brechen das Klonen von Repos mit LFS ab (siehe [Häufige Probleme](#5-häufige-probleme)). Windows-Update:
+**Git 2.45.2 or newer** (check with `git --version`). Older versions abort when cloning repos that use LFS (see [Common problems](#5-common-problems)). Updating on Windows:
 
 ```bash
 git update-git-for-windows
 ```
 
-### 1.2 Git-Identität setzen
+### 1.2 Set your Git identity
 
 ```bash
-git config --global user.name  "Vorname Nachname"
-git config --global user.email "deine-github-mail@example.com"
+git config --global user.name  "First Last"
+git config --global user.email "your-github-mail@example.com"
 ```
 
-Die Mail sollte zu deinem GitHub-Account passen, sonst werden Commits nicht dir zugeordnet (wichtig für die Peer-Bewertung).
+The email should match your GitHub account, otherwise your commits aren't attributed to you (important for the peer review).
 
-### 1.3 GitHub-Zugang
+### 1.3 GitHub access
 
-1. Einladung zur Organisation / zum Repo annehmen (Mail oder github.com → Notifications)
-2. Anmeldung für Git einrichten, **eine** der Varianten:
-   - **Windows:** nichts tun, beim ersten `git push` öffnet sich der Git Credential Manager im Browser
-   - **macOS/Linux:** [GitHub CLI](https://cli.github.com/) installieren und `gh auth login` ausführen
-   - alternativ SSH-Key ([Anleitung](https://docs.github.com/en/authentication/connecting-to-github-with-ssh))
+1. Accept the invitation to the organization / repo (email or github.com → Notifications)
+2. Set up authentication for Git, **one** of these options:
+   - **Windows:** do nothing, the Git Credential Manager opens in the browser on your first `git push`
+   - **macOS/Linux:** install the [GitHub CLI](https://cli.github.com/) and run `gh auth login`
+   - alternatively an SSH key ([guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh))
 
-Das GitHub-Passwort funktioniert für `git push` über HTTPS **nicht**.
+Your GitHub password does **not** work for `git push` over HTTPS.
 
-### 1.4 .NET SDK installieren
+### 1.4 Install the .NET SDK
 
-- **.NET 8 SDK (64-bit)** von <https://dotnet.microsoft.com/download/dotnet/8.0> installieren
-  - macOS: alternativ `brew install --cask dotnet-sdk@8`
-  - Linux: Paket `dotnet-sdk-8.0` (Name je nach Distribution)
-- Prüfen im Terminal:
+- Install the **.NET 8 SDK (64-bit)** from <https://dotnet.microsoft.com/download/dotnet/8.0>
+  - macOS: alternatively `brew install --cask dotnet-sdk@8`
+  - Linux: package `dotnet-sdk-8.0` (name depends on the distribution)
+- Check in a terminal:
   ```bash
-  dotnet --list-sdks     # muss eine 8.x-Zeile enthalten
+  dotnet --list-sdks     # must contain an 8.x line
   ```
-- Neuere SDKs dürfen **zusätzlich** installiert sein. Godot 4.7 baut aber gegen .NET 8, deshalb muss 8.x vorhanden sein
+- Newer SDKs may be installed **in addition**. Godot 4.7 builds against .NET 8 though, so 8.x has to be there
 
-### 1.5 Godot 4.7.2 .NET installieren
+### 1.5 Install Godot 4.7.2 .NET
 
-- Download **nur** aus dem offiziellen Archiv: <https://godotengine.org/download/archive/> → **4.7.2-stable** → **„.NET“**-Variante für dein System
-- **Nicht** die Standard-Version: Die kann kein C# ausführen
-- **Nicht** über Steam, itch.io oder Paketmanager installieren: Die aktualisieren automatisch auf neuere Versionen, und dann ändert Godot beim Öffnen Projektdateien
-- Bei uns allen muss **exakt** dieselbe Version laufen. Updates nur nach Absprache im Team
-- Kontrolle: _Hilfe → Über Godot_ zeigt `v4.7.2.stable.mono.official`
+- Download **only** from the official archive: <https://godotengine.org/download/archive/> → **4.7.2-stable** → **".NET"** variant for your system
+- **Not** the standard version: it can't run C#
+- **Don't** install via Steam, itch.io or a package manager: they update automatically to newer versions, and then Godot changes project files when opening them
+- All of us must run **exactly** the same version. Updates only after agreeing on them in the team
+- Check: _Help → About Godot_ shows `v4.7.2.stable.mono.official`
 
-Optional (erst für Builds nötig): Export Templates 4.7.2 **.NET** über _Editor → Manage Export Templates → Download and Install_.
+Optional (only needed for builds): export templates 4.7.2 **.NET** via _Editor → Manage Export Templates → Download and Install_.
 
-### 1.6 Code-Editor für C# (empfohlen)
+### 1.6 Code editor for C# (recommended)
 
-Eine der Varianten:
+One of these:
 
-- **VS Code** + Extensions _C# Dev Kit_ und _godot-tools_
-- **JetBrains Rider** (für Studierende kostenlos)
-- **Visual Studio** (nur Windows)
+- **VS Code** + the extensions _C# Dev Kit_ and _godot-tools_
+- **JetBrains Rider** (free for students)
+- **Visual Studio** (Windows only)
 
-Dann in Godot: _Editor → Editor Settings → Dotnet → Editor → External Editor_ auf deinen Editor stellen.
+Then in Godot: set _Editor → Editor Settings → Dotnet → Editor → External Editor_ to your editor.
 
-### 1.7 Nur für C++ (GDExtension), erst wenn wir es brauchen
+### 1.7 Only for C++ (GDExtension), once we need it
 
-Wer C++-Code schreibt, braucht zusätzlich Python 3, SCons (`pip install scons`) und einen C++-Compiler (Windows: Visual Studio Build Tools mit „Desktop development with C++“, macOS: `xcode-select --install`, Linux: `gcc`/`clang`). Alle anderen brauchen das **nicht**, die fertig kompilierten Bibliotheken liegen im Repo.
+Anyone writing C++ code additionally needs Python 3, SCons (`pip install scons`) and a C++ compiler (Windows: Visual Studio Build Tools with "Desktop development with C++", macOS: `xcode-select --install`, Linux: `gcc`/`clang`). Everyone else does **not** need this, the precompiled libraries are in the repo.
 
 ---
 
-## 2. Projekt klonen und öffnen
+## 2. Clone and open the project
 
-Immer die **HTTPS**-URL verwenden, nicht `git@github.com:…`. Über SSH schlägt der LFS-Download unter Windows oft fehl, auch wenn der Klon selbst funktioniert.
+Always use the **HTTPS** URL, not `git@github.com:…`. Over SSH the LFS download often fails on Windows, even if the clone itself works.
 
 ```bash
 git clone https://github.com/GaslightingRocks/CG-Idea3-swarm.git
 cd CG-Idea3-swarm
-git lfs ls-files     # sollte Assets auflisten (sobald welche existieren)
+git lfs ls-files     # should list assets (once there are any)
 ```
 
-Endet der Klon mit `warning: Clone succeeded, but checkout failed.`, **nicht** weiterarbeiten, sondern in [Häufige Probleme](#5-häufige-probleme) nachsehen.
+If the clone ends with `warning: Clone succeeded, but checkout failed.`, do **not** keep working, check [Common problems](#5-common-problems) instead.
 
-1. Godot starten → **Import** → `project.godot` im geklonten Ordner auswählen
-2. Beim ersten Öffnen importiert Godot alle Assets, das dauert kurz
-3. Oben rechts auf **Build** (Hammer-Symbol) klicken, um den C#-Code zu kompilieren. Fehler stehen unten im Panel _MSBuild_
-4. **Kontrolle:** Godot schließen, dann `git status` ausführen. Es muss `nothing to commit, working tree clean` erscheinen. Falls nicht: **nichts committen**, sondern im Team melden
+1. Start Godot → **Import** → select `project.godot` in the cloned folder
+2. On the first start Godot imports all assets, this takes a moment
+3. Click **Build** (hammer icon) in the top right to compile the C# code. Errors show up in the _MSBuild_ panel at the bottom
+4. **Check:** close Godot, then run `git status`. It must say `nothing to commit, working tree clean`. If not: **don't commit anything**, tell the team instead
 
 ---
 
-## 3. Arbeitsregeln
+## 3. Working rules
 
 ### Git
 
-- **Erst `git pull`, dann Godot öffnen.** Vor Pull oder Branch-Wechsel **Godot schließen**
-- Pro Aufgabe ein Branch: `feature/<kurzbeschreibung>` (z. B. `feature/boid-separation`)
-- Nach `main` nur per **Pull Request**. `main` muss immer lauffähig sein
-- Klein und oft committen und mergen, das hält Konflikte klein
-- Immer alles stagen: `git add -A`, damit `.uid`- und `.import`-Dateien mitkommen
+- **First `git pull`, then open Godot.** **Close Godot** before pulling or switching branches
+- One branch per task: `feature/<short-description>` (e.g. `feature/boid-separation`)
+- Changes go into `main` only via **pull request**. `main` must always run
+- Commit and merge small and often, that keeps conflicts small
+- Always stage everything: `git add -A`, so `.uid` and `.import` files are included
 
 ### Godot
 
-- Dateien **nur im FileSystem-Dock von Godot** verschieben oder umbenennen, nie im Explorer/Finder
-- `.uid`- und `.import`-Dateien gehören ins Repo. Nicht löschen, nicht ignorieren
-- `.csproj` und `.sln` im Projekt-Root gehören ebenfalls ins Repo. Änderungen daran (z. B. NuGet-Pakete) nur nach Absprache
-- Nach jedem Pull mit neuem C#-Code einmal **Build** klicken, bevor du Szenen öffnest
-- **Eine `.tscn` gleichzeitig nur von einer Person bearbeiten.** Wer welche Szene bearbeitet, steht im GitHub Project
-- Zum Experimentieren eigene Testszene: `levels/sandbox/sandbox_<name>.tscn`
-- Project Settings (Input Map, Layer Names, Autoloads) nur nach Absprache ändern, `project.godot` ist konfliktanfällig
+- Move or rename files **only in Godot's FileSystem dock**, never in Explorer/Finder
+- `.uid` and `.import` files belong in the repo. Don't delete them, don't ignore them
+- `.csproj` and `.sln` in the project root belong in the repo too. Changes to them (e.g. NuGet packages) only after agreeing on them
+- After every pull with new C# code, click **Build** once before opening scenes
+- **Only one person edits a `.tscn` at a time.** Who edits which scene is tracked in the GitHub Project
+- For experiments use your own test scene: `levels/sandbox/sandbox_<name>.tscn`
+- Change project settings (Input Map, Layer Names, Autoloads) only after agreeing on it, `project.godot` is prone to conflicts
 
-### Code-Stil
+### Code style
 
-- **Standardsprache ist GDScript.** C# nur für Systeme, die es brauchen (z. B. performancekritische Simulation) oder wo wir C#-Bibliotheken nutzen
-- GDScript: **Tabs**, Dateien und Ordner in `snake_case`, Nodes in `PascalCase`, statische Typen (`var speed: float = 200.0`)
-- C#: 4 Leerzeichen, Dateiname = Klassenname in `PascalCase` (`FlockSimulation.cs`), Klasse als `public partial class`
-- Tuning-Werte als `@export` oder in `.tres`-Resources, nicht hardcoden
+- **The default language is GDScript.** C# only for systems that need it (e.g. performance-critical simulation) or where we use C# libraries
+- GDScript: **tabs**, files and folders in `snake_case`, nodes in `PascalCase`, static types (`var speed: float = 200.0`)
+- C#: 4 spaces, file name = class name in `PascalCase` (`FlockSimulation.cs`), class as `public partial class`
+- Tuning values as `@export` or in `.tres` resources, not hardcoded
 
 ---
 
-## 4. Projektstruktur
+## 4. Project structure
 
 ```
-assets/        Rohdaten (art, audio, fonts, shaders), keine Logik
-core/          Autoloads: Events (Signal-Bus), GameState
-flock/         Boid-System (Flock, BoidSettings, Influencer)
-individuals/   herausgelöste Boids
+assets/        Raw data (art, audio, fonts, shaders), no logic
+core/          Autoloads: Events (signal bus), GameState
+flock/         Boid system (Flock, BoidSettings, Influencer)
+individuals/   Boids split off from the swarm
 player/
-levels/        Level-Szenen, sandbox/ für persönliche Testszenen
+levels/        Level scenes, sandbox/ for personal test scenes
 ui/
-tools/         Debug-Overlays, Editor-Skripte
-docs/          Pitch, Devlog-Material (von Godot ignoriert)
-addons/        Fremd-Plugins
+tools/         Debug overlays, editor scripts
+docs/          Pitch, devlog material (ignored by Godot)
+addons/        Third-party plugins
 ```
 
 ---
 
-## 5. Häufige Probleme
+## 5. Common problems
 
-| Problem                                                                         | Lösung                                                                                                                                                                                                   |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Klon bricht ab: `fatal: active post-checkout hook found during git clone`       | Git-Version zu alt (Bug in Git ≤ 2.45.1 mit LFS). Git updaten (`git update-git-for-windows`), Ordner löschen, neu klonen                                                                                 |
-| Klon bricht ab: `smudge filter lfs failed` … `Permission denied (publickey)`    | Mit SSH-URL geklont, LFS kann sich nicht anmelden. Im Ordner: `git remote set-url origin https://github.com/GaslightingRocks/CG-Idea3-swarm.git`, dann `git restore --source=HEAD :/` und `git lfs pull` |
-| Bilder/Sounds fehlen oder sind kaputt, Datei enthält `version https://git-lfs…` | `git lfs install`, dann `git lfs pull`                                                                                                                                                                   |
-| Nach dem Öffnen viele geänderte `.uid`/`.tscn`-Dateien                          | Falsche Godot-Version oder vor dem Öffnen nicht gepullt. Nicht committen, Änderungen verwerfen (`git restore .`), pullen, neu öffnen                                                                     |
-| `project.godot` geändert, obwohl nichts eingestellt                             | Godot-Version prüfen (Hilfe → Über)                                                                                                                                                                      |
-| Kein **Build**-Knopf, C#-Skripte lassen sich nicht anhängen                     | Standard- statt .NET-Version von Godot installiert                                                                                                                                                       |
-| Build schlägt fehl: SDK nicht gefunden                                          | `dotnet --list-sdks` prüfen, .NET 8 SDK (64-bit) installieren, Godot neu starten                                                                                                                         |
-| Szene meldet fehlendes Skript nach Pull                                         | Einmal **Build** klicken                                                                                                                                                                                 |
-| Push abgelehnt: `protected branch`                                              | Normal. Über Branch + Pull Request mergen                                                                                                                                                                |
-| Merge-Konflikt in einer `.tscn`                                                 | Nicht von Hand mischen. Eine Version wählen (`git checkout --ours/--theirs <datei>`), Änderungen der anderen Seite in Godot nachbauen                                                                    |
+| Problem                                                                     | Solution                                                                                                                                                                                                 |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clone aborts: `fatal: active post-checkout hook found during git clone`     | Git version too old (bug in Git ≤ 2.45.1 with LFS). Update Git (`git update-git-for-windows`), delete the folder, clone again                                                                            |
+| Clone aborts: `smudge filter lfs failed` … `Permission denied (publickey)`  | Cloned with the SSH URL, LFS can't log in. In the folder: `git remote set-url origin https://github.com/GaslightingRocks/CG-Idea3-swarm.git`, then `git restore --source=HEAD :/` and `git lfs pull` |
+| Images/sounds missing or broken, the file contains `version https://git-lfs…` | `git lfs install`, then `git lfs pull`                                                                                                                                                                 |
+| Many changed `.uid`/`.tscn` files after opening the project                 | Wrong Godot version or didn't pull before opening. Don't commit, discard the changes (`git restore .`), pull, open again                                                                               |
+| `project.godot` changed although nothing was set                            | Check the Godot version (Help → About)                                                                                                                                                                   |
+| No **Build** button, C# scripts can't be attached                           | Standard instead of .NET version of Godot installed                                                                                                                                                      |
+| Build fails: SDK not found                                                  | Check `dotnet --list-sdks`, install the .NET 8 SDK (64-bit), restart Godot                                                                                                                               |
+| Scene reports a missing script after a pull                                 | Click **Build** once                                                                                                                                                                                     |
+| Push rejected: `protected branch`                                           | Expected. Merge via branch + pull request                                                                                                                                                                |
+| Merge conflict in a `.tscn`                                                 | Don't merge by hand. Pick one version (`git checkout --ours/--theirs <file>`), rebuild the other side's changes in Godot                                                                                |
 
 ---
 
-## 6. Kontakt
+## 6. Contact
 
-- Kommunikation: Discord
-- Aufgaben: GitHub Project (Board)
-- Setup-Fragen: <Name>
+- Communication: Discord
+- Tasks: GitHub Project (board)
+- Setup questions: <Name>
